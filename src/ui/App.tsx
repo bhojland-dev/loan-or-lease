@@ -201,7 +201,7 @@ function App() {
             </Field>
           </section>
 
-          <section className="card" aria-labelledby="lease-title">
+          <section className="card card-lease" aria-labelledby="lease-title">
             <h2 id="lease-title">Privatleasing</h2>
             <Field id="leaseTermMonths" label="Leasingaftalens løbetid">
               {(describedBy) => (
