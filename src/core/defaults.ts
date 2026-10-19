@@ -1,89 +1,100 @@
-// Alle standardværdier fra SPEC.md, samlet ét sted.
+// Standardværdier og satser fra SPEC.md, samlet i ét objekt.
+//
+// Motoren bruger DEFAULT_SETTINGS, medmindre der sendes andre indstillinger ind. Så kan satserne
+// senere komme fra fx en API eller en fil, uden at beregningerne skal ændres: hent dem uden for
+// motoren og send dem ind i createDefaultDraft(), validate() og calculate().
 
-import type { DepreciationPct, Frequency, InputDraft, LeaseTerm } from './types.ts'
+import type { DepreciationPct, InputDraft, LeaseTerm, PeriodicAmount } from './types.ts'
 
-// I5 tinglysningsafgift: 1.850 kr. + 1,5 % af lånebehovet, hele beløbet oprundet til nærmeste 100 kr.
-// Kilde: Skat.dk, ny afgiftssats pr. 1. januar 2026, og Tinglysningsretten (2026).
-export const REGISTRATION_FEE_FIXED = 1850
-export const REGISTRATION_FEE_RATE = 0.015
-export const REGISTRATION_FEE_ROUNDING = 100
+export interface Settings {
+  /** I5: fast beløb + sats af lånebehovet, hele beløbet oprundet. */
+  registrationFee: { fixed: number; rate: number; rounding: number }
+  /** I6: sats af lånebehovet inden for min og maks. */
+  establishmentFee: { rate: number; min: number; max: number }
+  monthlyLoanFee: number // I7
+  depreciationPct: DepreciationPct // I9
+  ownershipTax: PeriodicAmount // I11
+  annualKm: number // I12
+  leaseTermMonths: LeaseTerm // I13
+  returnCost: number // I19
+  annualReturnPct: number // I21
+  returnTaxPct: number // I22
+  interestDeductionPct: number // I23
+  /** O4: advarsel ved kørsel over denne grænse (km/år). */
+  highMileageKmPerYear: number
+}
 
-// I6 stiftelsesprovision: 1,25 % af lånebehovet, min. 2.000 kr., maks. 10.000 kr.
-// Kilde: AL Sydbank, prisliste udlån april 2026.
-export const ESTABLISHMENT_FEE_RATE = 0.0125
-export const ESTABLISHMENT_FEE_MIN = 2000
-export const ESTABLISHMENT_FEE_MAX = 10000
+export const DEFAULT_SETTINGS: Settings = {
+  // Kilde: Skat.dk, ny afgiftssats pr. 1. januar 2026, og Tinglysningsretten (2026).
+  registrationFee: { fixed: 1850, rate: 0.015, rounding: 100 },
+  // Kilde: AL Sydbank, prisliste udlån april 2026.
+  establishmentFee: { rate: 0.0125, min: 2000, max: 10000 },
+  // Kilde: SPEC.md (2026).
+  monthlyLoanFee: 0,
+  // Ca. 20 % tab i år 1 og ca. 50 % efter 4 år, ligeligt fordelt på år 2-4.
+  // Kilde: Bilbasen/Bilinfo, "Penge ud af vinduet" (ca. 2016).
+  depreciationPct: [20, 14.5, 14.5, 14.5],
+  // Typisk for moderne elbiler (2026). Ingen kilde, valgt af Brian.
+  ownershipTax: { amount: 460, frequency: 'halfYear' },
+  // Kilde: SPEC.md (2026).
+  annualKm: 15000,
+  // Kilde: SPEC.md (2026).
+  leaseTermMonths: 48,
+  // Kilde: SPEC.md (2026), jf. If, tilbageleveringsforsikring (Leasing Super).
+  returnCost: 5000,
+  // Kilde: SPEC.md (2026); kilden til satsen er ikke angivet.
+  annualReturnPct: 0.25,
+  // Kilde: SPEC.md (2026), jf. BankInvest, skatteguide 2026.
+  returnTaxPct: 37,
+  // Ca. skatteværdien af negativ kapitalindkomst under 50.000 kr. om året. Kilde: valgt af Brian (2026).
+  interestDeductionPct: 33,
+  // Kilde: SPEC.md (2026).
+  highMileageKmPerYear: 20000,
+}
 
-// I7 løbende lånegebyr. Kilde: SPEC.md (2026).
-export const MONTHLY_LOAN_FEE = 0
+// Faste regler, ikke standardværdier. Kilde: SPEC.md (2026).
 
-// I9 afskrivning år 1-4: ca. 20 % tab i år 1 og ca. 50 % efter 4 år, ligeligt fordelt på år 2-4.
-// Kilde: Bilbasen/Bilinfo, "Penge ud af vinduet" (ca. 2016).
-export const DEPRECIATION_PCT: DepreciationPct = [20, 14.5, 14.5, 14.5]
-
-// I11 ejerafgift: 460 kr. halvårligt, typisk for moderne elbiler (2026). Ingen kilde, valgt af Brian.
-export const OWNERSHIP_TAX_AMOUNT = 460
-export const OWNERSHIP_TAX_FREQUENCY: Frequency = 'halfYear'
-
-// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000, standard 15.000. Kilde: SPEC.md (2026).
-export const ANNUAL_KM = 15000
 const KM_MIN = 10000
 const KM_MAX = 45000
 const KM_STEP = 5000
 
-/** De tilladte værdier for I12. */
+/** I12: de tilladte værdier, 10.000-45.000 km/år i trin af 5.000. */
 export const KM_STOPS: readonly number[] = Array.from(
   { length: (KM_MAX - KM_MIN) / KM_STEP + 1 },
   (_, i) => KM_MIN + i * KM_STEP,
 )
 
-// I13 leasingaftalens løbetid. Kilde: SPEC.md (2026).
-export const LEASE_TERM_MONTHS: LeaseTerm = 48
+/** I13: leasingaftalens mulige løbetider (mdr.). */
 export const LEASE_TERMS: readonly LeaseTerm[] = [12, 24, 36, 48]
 
-// I19 egenbetaling ved aflevering. Kilde: SPEC.md (2026), jf. If, tilbageleveringsforsikring (Leasing Super).
-export const RETURN_COST = 5000
-
-// I21 årlig afkastrente i %. Kilde: SPEC.md (2026); kilden til satsen er ikke angivet.
-export const ANNUAL_RETURN_PCT = 0.25
-
-// I22 skattesats på afkast i %. Kilde: SPEC.md (2026), jf. BankInvest, skatteguide 2026.
-export const RETURN_TAX_PCT = 37
-
-// I23 fradragsprocent for renter: ca. skatteværdien af negativ kapitalindkomst under 50.000 kr. om året.
-// Kilde: valgt af Brian (2026).
-export const INTEREST_DEDUCTION_PCT = 33
-
-// O4: advarsel ved kørsel over denne grænse (km/år). Kilde: SPEC.md (2026).
-export const HIGH_MILEAGE_KM_PER_YEAR = 20000
-
-// Tidspunkter t, der sammenlignes (mdr.): de samme som de mulige løbetider. Kilde: SPEC.md (2026).
+/** Tidspunkter t, der sammenlignes (mdr.): de samme som de mulige løbetider. */
 export const COMPARISON_MONTHS: readonly LeaseTerm[] = LEASE_TERMS
 
 /** Standardværdi for I5 beregnet af lånebehovet L. */
-export function defaultRegistrationFee(loanNeed: number): number {
+export function defaultRegistrationFee(loanNeed: number, settings: Settings = DEFAULT_SETTINGS): number {
+  const { fixed, rate, rounding } = settings.registrationFee
   // Afrund til hele øre først, så fx 150,00000000000003 ikke rundes op til næste 100 kr.
-  const fee = Math.round((REGISTRATION_FEE_FIXED + REGISTRATION_FEE_RATE * loanNeed) * 100) / 100
-  return Math.ceil(fee / REGISTRATION_FEE_ROUNDING) * REGISTRATION_FEE_ROUNDING
+  const fee = Math.round((fixed + rate * loanNeed) * 100) / 100
+  return Math.ceil(fee / rounding) * rounding
 }
 
 /** Standardværdi for I6 beregnet af lånebehovet L. */
-export function defaultEstablishmentFee(loanNeed: number): number {
-  const fee = ESTABLISHMENT_FEE_RATE * loanNeed
-  return Math.min(ESTABLISHMENT_FEE_MAX, Math.max(ESTABLISHMENT_FEE_MIN, fee))
+export function defaultEstablishmentFee(loanNeed: number, settings: Settings = DEFAULT_SETTINGS): number {
+  const { rate, min, max } = settings.establishmentFee
+  return Math.min(max, Math.max(min, rate * loanNeed))
 }
 
 /** Formularens startværdier. I5 og I6 udelades, da de afhænger af lånebehovet. */
-export function createDefaultDraft(): InputDraft {
+export function createDefaultDraft(settings: Settings = DEFAULT_SETTINGS): InputDraft {
   return {
-    monthlyLoanFee: MONTHLY_LOAN_FEE,
-    depreciationPct: DEPRECIATION_PCT,
-    ownershipTax: { amount: OWNERSHIP_TAX_AMOUNT, frequency: OWNERSHIP_TAX_FREQUENCY },
-    annualKm: ANNUAL_KM,
-    leaseTermMonths: LEASE_TERM_MONTHS,
-    returnCost: RETURN_COST,
-    annualReturnPct: ANNUAL_RETURN_PCT,
-    returnTaxPct: RETURN_TAX_PCT,
-    interestDeductionPct: INTEREST_DEDUCTION_PCT,
+    monthlyLoanFee: settings.monthlyLoanFee,
+    depreciationPct: settings.depreciationPct,
+    ownershipTax: { ...settings.ownershipTax },
+    annualKm: settings.annualKm,
+    leaseTermMonths: settings.leaseTermMonths,
+    returnCost: settings.returnCost,
+    annualReturnPct: settings.annualReturnPct,
+    returnTaxPct: settings.returnTaxPct,
+    interestDeductionPct: settings.interestDeductionPct,
   }
 }

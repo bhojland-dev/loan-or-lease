@@ -1,11 +1,8 @@
 // Validering af input (SPEC.md afsnit 1 og O8). Beregningen gennemføres kun, når alt er gyldigt.
 
-import {
-  defaultEstablishmentFee,
-  defaultRegistrationFee,
-  KM_STOPS,
-  LEASE_TERMS,
-} from './defaults.ts'
+import { DEFAULT_SETTINGS, defaultEstablishmentFee, defaultRegistrationFee } from './defaults.ts'
+import type { Settings } from './defaults.ts'
+import { NUMBER_FIELD_NAMES, NUMBER_FIELDS } from './fields.ts'
 import { calculateLoanNeed } from './loan.ts'
 import { isFrequency } from './runningCosts.ts'
 import type {
@@ -13,7 +10,9 @@ import type {
   InputDraft,
   InputField,
   LeaseTerm,
+  NumberField,
   PeriodicAmount,
+  PeriodicField,
   ValidationError,
   ValidationResult,
 } from './types.ts'
@@ -24,75 +23,60 @@ function isNumber(value: number | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-export function validate(draft: InputDraft): ValidationResult {
+export function validate(draft: InputDraft, settings: Settings = DEFAULT_SETTINGS): ValidationResult {
   const errors: ValidationError[] = []
+  const add = (field: InputField, message: string) => errors.push({ field, message })
 
-  function add(field: InputField, message: string): void {
-    errors.push({ field, message })
+  // Lånefelterne bruges kun ved lån (B1 > 0). Mangler købspris eller udbetaling, regnes der ikke med lån.
+  const loanNeed =
+    isNumber(draft.purchasePrice) && isNumber(draft.downPayment)
+      ? calculateLoanNeed(draft.purchasePrice, draft.downPayment)
+      : 0
+  const hasLoan = loanNeed > 0
+  const computedDefaults: Partial<Record<NumberField, number>> = {
+    registrationFee: defaultRegistrationFee(loanNeed, settings),
+    establishmentFee: defaultEstablishmentFee(loanNeed, settings),
   }
 
-  /** Tjekker et påkrævet tal. Returnerer 0 ved fejl, så resten af valideringen kan fortsætte. */
-  function required(field: InputField, value: number | undefined, check: (v: number) => boolean, message: string): number {
-    if (!isNumber(value)) {
+  // Talfelter. Et ugyldigt felt giver 0, så resten af valideringen kan fortsætte.
+  const numbers = {} as Record<NumberField, number>
+  for (const field of NUMBER_FIELD_NAMES) {
+    const spec = NUMBER_FIELDS[field]
+    const value = draft[field]
+    if (spec.scope === 'loan' && !hasLoan) {
+      numbers[field] = 0
+    } else if (spec.computedDefault && value === undefined) {
+      numbers[field] = computedDefaults[field] ?? 0
+    } else if (!isNumber(value)) {
       add(field, REQUIRED)
-      return 0
+      numbers[field] = 0
+    } else {
+      if (!spec.isValid(value)) add(field, spec.message)
+      numbers[field] = value
     }
-    if (!check(value)) add(field, message)
-    return value
   }
 
-  function optional(field: InputField, value: number | undefined, fallback: number, check: (v: number) => boolean, message: string): number {
-    if (value === undefined) return fallback
-    return required(field, value, check, message)
+  if (isNumber(draft.purchasePrice) && isNumber(draft.downPayment) && draft.downPayment > draft.purchasePrice) {
+    add('downPayment', 'Udbetalingen må ikke være større end købsprisen.')
   }
 
-  function periodic(field: InputField, value: Partial<PeriodicAmount> | undefined): PeriodicAmount {
-    const amount = required(field, value?.amount, (v) => v >= 0, 'Beløbet må ikke være negativt.')
-    const frequency = value?.frequency
+  // Beløb med frekvens. Kun én fejl pr. felt: mangler beløbet, er "Feltet skal udfyldes" nok.
+  function periodic(field: PeriodicField): PeriodicAmount {
+    const { amount, frequency } = draft[field] ?? {}
+    if (!isNumber(amount)) {
+      add(field, REQUIRED)
+      return { amount: 0, frequency: 'month' }
+    }
+    if (amount < 0) add(field, 'Beløbet må ikke være negativt.')
     if (!isFrequency(frequency)) {
-      // Kun én fejl pr. felt: mangler beløbet, er "Feltet skal udfyldes" nok.
-      if (isNumber(value?.amount)) add(field, 'Vælg en frekvens.')
+      add(field, 'Vælg en frekvens.')
       return { amount, frequency: 'month' }
     }
     return { amount, frequency }
   }
-
-  const nonNegative = (v: number) => v >= 0
-  const NON_NEGATIVE = 'Værdien må ikke være negativ.'
-  const percent = (v: number) => v >= 0 && v <= 100
-  const PERCENT_MESSAGE = 'Procenten skal være mellem 0 og 100.'
-
-  // Køb
-  const purchasePrice = required('purchasePrice', draft.purchasePrice, (v) => v > 0, 'Købsprisen skal være større end 0.')
-  const downPayment = required('downPayment', draft.downPayment, nonNegative, NON_NEGATIVE)
-  if (isNumber(draft.purchasePrice) && isNumber(draft.downPayment) && downPayment > purchasePrice) {
-    add('downPayment', 'Udbetalingen må ikke være større end købsprisen.')
-  }
-
-  // Lånefelterne I3-I7 og I23 bruges kun, når der er et lån (L > 0). Uden lån ignoreres de helt.
-  const loanNeed = calculateLoanNeed(purchasePrice, downPayment)
-  const hasLoan = loanNeed > 0
-  let interestRatePct = 0
-  let loanTermMonths = 0
-  let registrationFee = 0
-  let establishmentFee = 0
-  let monthlyLoanFee = 0
-  let interestDeductionPct = 0
-  if (hasLoan) {
-    interestRatePct = required('interestRatePct', draft.interestRatePct, nonNegative, 'Renten må ikke være negativ.')
-    loanTermMonths = required(
-      'loanTermMonths',
-      draft.loanTermMonths,
-      (v) => v > 0 && Number.isInteger(v),
-      'Løbetiden skal være et helt antal måneder større end 0.',
-    )
-    registrationFee = optional('registrationFee', draft.registrationFee, defaultRegistrationFee(loanNeed), nonNegative, NON_NEGATIVE)
-    establishmentFee = optional('establishmentFee', draft.establishmentFee, defaultEstablishmentFee(loanNeed), nonNegative, NON_NEGATIVE)
-    monthlyLoanFee = required('monthlyLoanFee', draft.monthlyLoanFee, nonNegative, NON_NEGATIVE)
-    interestDeductionPct = required('interestDeductionPct', draft.interestDeductionPct, percent, PERCENT_MESSAGE)
-  }
-
-  const service = periodic('service', draft.service)
+  const service = periodic('service')
+  const insurance = periodic('insurance')
+  const ownershipTax = periodic('ownershipTax')
 
   const depreciation = draft.depreciationPct
   let depreciationPct: DepreciationPct = [0, 0, 0, 0]
@@ -103,50 +87,17 @@ export function validate(draft: InputDraft): ValidationResult {
     depreciationPct = depreciation
   }
 
-  // Begge
-  const insurance = periodic('insurance', draft.insurance)
-  const ownershipTax = periodic('ownershipTax', draft.ownershipTax)
-  const annualKm = required('annualKm', draft.annualKm, (v) => KM_STOPS.includes(v), 'Vælg mellem 10.000 og 45.000 km i trin af 5.000.')
-
-  // Leasing
-  const leaseTermMonths = required(
-    'leaseTermMonths',
-    draft.leaseTermMonths,
-    (v) => LEASE_TERMS.includes(v as LeaseTerm),
-    'Løbetiden skal være 12, 24, 36 eller 48 måneder.',
-  ) as LeaseTerm
-  const leaseInitialPayment = required('leaseInitialPayment', draft.leaseInitialPayment, nonNegative, NON_NEGATIVE)
-  const leaseMonthlyPayment = required('leaseMonthlyPayment', draft.leaseMonthlyPayment, (v) => v > 0, 'Ydelsen skal være større end 0.')
-  const returnCost = required('returnCost', draft.returnCost, nonNegative, NON_NEGATIVE)
-
-  // Afkast regnes altid med.
-  const annualReturnPct = required('annualReturnPct', draft.annualReturnPct, nonNegative, 'Renten må ikke være negativ.')
-  const returnTaxPct = required('returnTaxPct', draft.returnTaxPct, percent, PERCENT_MESSAGE)
-
   if (errors.length > 0) return { ok: false, errors }
 
   return {
     ok: true,
     inputs: {
-      purchasePrice,
-      downPayment,
-      interestRatePct,
-      loanTermMonths,
-      registrationFee,
-      establishmentFee,
-      monthlyLoanFee,
+      ...numbers,
+      leaseTermMonths: numbers.leaseTermMonths as LeaseTerm,
       service,
-      depreciationPct,
       insurance,
       ownershipTax,
-      annualKm,
-      leaseTermMonths,
-      leaseInitialPayment,
-      leaseMonthlyPayment,
-      returnCost,
-      annualReturnPct,
-      returnTaxPct,
-      interestDeductionPct,
+      depreciationPct,
     },
   }
 }

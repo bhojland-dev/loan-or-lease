@@ -1,7 +1,8 @@
 // Samler beregningerne: input ind, O1-O4 og O10 ud.
 
 import { breakEven } from './breakEven.ts'
-import { COMPARISON_MONTHS } from './defaults.ts'
+import { COMPARISON_MONTHS, DEFAULT_SETTINGS } from './defaults.ts'
+import type { Settings } from './defaults.ts'
 import { investmentReturn, monthlyOutflows } from './investmentReturn.ts'
 import { amortizationSchedule, calculateLoan } from './loan.ts'
 import { buyMonthlyCosts, leaseMonthlyCosts } from './monthlyCosts.ts'
@@ -9,7 +10,8 @@ import { warnings } from './notes.ts'
 import { buyTco, leaseTco } from './tco.ts'
 import type { Cheapest, ComparisonRow, Inputs, Result } from './types.ts'
 
-export function calculate(inputs: Inputs): Result {
+/** Inputs skal komme fra validate(). Settings bruges kun til advarsler; satserne ligger allerede i inputs. */
+export function calculate(inputs: Inputs, settings: Settings = DEFAULT_SETTINGS): Result {
   const loan = calculateLoan(inputs)
   const comparison: ComparisonRow[] = []
 
@@ -27,6 +29,6 @@ export function calculate(inputs: Inputs): Result {
     comparison,
     breakEven: comparison.map((row) => breakEven(row.months, inputs.purchasePrice, row.buy, row.lease)),
     amortization: amortizationSchedule(loan, inputs.monthlyLoanFee),
-    warnings: warnings(inputs),
+    warnings: warnings(inputs, settings),
   }
 }

@@ -63,6 +63,12 @@ export interface Inputs {
 
 export type InputField = keyof InputDraft
 
+/** Felter med et beløb og en frekvens (I8, I10, I11). */
+export type PeriodicField = 'service' | 'insurance' | 'ownershipTax'
+
+/** Felter med ét tal. */
+export type NumberField = Exclude<InputField, PeriodicField | 'depreciationPct'>
+
 export interface ValidationError {
   field: InputField
   message: string

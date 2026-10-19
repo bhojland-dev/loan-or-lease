@@ -46,14 +46,9 @@ describe('validering', () => {
   })
 
   it('O8: beregning gennemføres ikke, før alle påkrævede felter er udfyldt', () => {
-    expect(errorFields(createDefaultDraft())).toEqual([
-      'purchasePrice',
-      'downPayment',
-      'service',
-      'insurance',
-      'leaseInitialPayment',
-      'leaseMonthlyPayment',
-    ])
+    expect(errorFields(createDefaultDraft()).sort()).toEqual(
+      ['purchasePrice', 'downPayment', 'service', 'insurance', 'leaseInitialPayment', 'leaseMonthlyPayment'].sort(),
+    )
   })
 
   it('O8: udbetaling > købspris giver fejl', () => {

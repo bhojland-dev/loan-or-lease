@@ -1,10 +1,9 @@
 // Advarsel (SPEC.md O4) og noter (O5 og O9), der vises ved de relevante felter.
 
-import { HIGH_MILEAGE_KM_PER_YEAR } from './defaults.ts'
+import { DEFAULT_SETTINGS } from './defaults.ts'
+import type { Settings } from './defaults.ts'
 import type { InputField, Inputs, Warning } from './types.ts'
 
-const HIGH_MILEAGE_WARNING =
-  'Du kører over 20.000 km om året. Restværdien ved køb kan være sat for højt, og afskrivningsprocenterne bør hæves.'
 
 export interface FieldNote {
   field: InputField
@@ -23,10 +22,14 @@ export const FIELD_NOTES: readonly FieldNote[] = [
   },
 ]
 
+const km = new Intl.NumberFormat('da-DK')
+
 /** O4 */
-export function warnings(inputs: Pick<Inputs, 'annualKm'>): Warning[] {
-  if (inputs.annualKm > HIGH_MILEAGE_KM_PER_YEAR) {
-    return [{ code: 'highMileage', field: 'annualKm', message: HIGH_MILEAGE_WARNING }]
+export function warnings(inputs: Pick<Inputs, 'annualKm'>, settings: Settings = DEFAULT_SETTINGS): Warning[] {
+  const limit = settings.highMileageKmPerYear
+  if (inputs.annualKm > limit) {
+    const message = `Du kører over ${km.format(limit)} km om året. Restværdien ved køb kan være sat for højt, og afskrivningsprocenterne bør hæves.`
+    return [{ code: 'highMileage', field: 'annualKm', message }]
   }
   return []
 }
