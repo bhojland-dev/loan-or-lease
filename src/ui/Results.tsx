@@ -1,6 +1,7 @@
 // Visning af O1-O3. Alle tal kommer fra src/core.
 
-import type { BuyBreakdown, Cheapest, LeaseBreakdown, Result } from '../core/index.ts'
+import { useState } from 'react'
+import type { BuyBreakdown, Cheapest, ComparisonRow, LeaseBreakdown, Result } from '../core/index.ts'
 import { AnimatedNumber } from './AnimatedNumber.tsx'
 import { formatFraction, formatKr, formatMonths } from './format.ts'
 
@@ -11,13 +12,92 @@ const CHEAPEST_LABEL: Record<Cheapest, string> = {
 }
 
 export function Results({ result }: { result: Result }) {
+  const last = result.comparison[result.comparison.length - 1]
+  const [chosen, setChosen] = useState(last.months)
+  // Bliver leasingperioden kortere end det valgte tidspunkt, vises det sidste.
+  const row = result.comparison.find((r) => r.months === chosen) ?? last
   return (
     <>
+      <Summary result={result} row={row} onChoose={setChosen} />
       <Comparison result={result} />
       <BreakEven result={result} />
-      <Breakdown result={result} />
+      <Breakdown row={row} />
       <Amortization result={result} />
     </>
+  )
+}
+
+/** O1 for ét valgt tidspunkt: køb og leasing over for hinanden. */
+function Summary({ result, row, onChoose }: { result: Result; row: ComparisonRow; onChoose: (months: number) => void }) {
+  const max = Math.max(row.buy.total, row.lease.total, 1)
+  const bar = (value: number) => `${Math.max(0, (value / max) * 100)}%`
+
+  return (
+    <section className="card summary" aria-labelledby="summary-title">
+      <div className="summary-head">
+        <h2 id="summary-title">Resultat efter {formatMonths(row.months)}</h2>
+        <div className="segmented" role="radiogroup" aria-label="Vis resultat efter">
+          {result.comparison.map((r) => (
+            <button
+              key={r.months}
+              type="button"
+              role="radio"
+              aria-checked={r.months === row.months}
+              className={r.months === row.months ? 'is-active' : undefined}
+              onClick={() => onChoose(r.months)}
+            >
+              {formatMonths(r.months)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="duel duel-result">
+        <div className={`tile tile-buy${row.cheapest === 'buy' ? ' is-winner' : ''}`}>
+          <span className="tile-k">
+            <span className="dot" aria-hidden="true" />
+            Køb med billån
+          </span>
+          <span className="tile-v">
+            <AnimatedNumber value={row.buy.total} format={formatKr} />
+          </span>
+          <span className="tile-bar" aria-hidden="true">
+            <span style={{ width: bar(row.buy.total) }} />
+          </span>
+          <span className="tile-s">Samlede omkostninger (TCO)</span>
+        </div>
+
+        <div className="verdict" role="status">
+          {row.cheapest === 'equal' ? (
+            <span className="verdict-text">Lige dyre</span>
+          ) : (
+            <>
+              <span key={row.cheapest} className={`verdict-who verdict-${row.cheapest}`}>
+                {row.cheapest === 'buy' ? 'Køb' : 'Leasing'} er billigst
+              </span>
+              <span className="verdict-amount">
+                <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} />
+              </span>
+              <span className="verdict-text">i forskel</span>
+            </>
+          )}
+        </div>
+
+        <div className={`tile tile-lease${row.cheapest === 'lease' ? ' is-winner' : ''}`}>
+          <span className="tile-k">
+            <span className="dot" aria-hidden="true" />
+            Privatleasing
+          </span>
+          <span className="tile-v">
+            <AnimatedNumber value={row.lease.total} format={formatKr} />
+          </span>
+          <span className="tile-bar" aria-hidden="true">
+            <span style={{ width: bar(row.lease.total) }} />
+          </span>
+          <span className="tile-s">Samlede omkostninger (TCO)</span>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -25,8 +105,8 @@ export function Results({ result }: { result: Result }) {
 function Comparison({ result }: { result: Result }) {
   return (
     <section className="card" aria-labelledby="comparison-title">
-      <h2 id="comparison-title">Samlede omkostninger (TCO)</h2>
-      <p className="section-intro">Lavest TCO er billigst.</p>
+      <h2 id="comparison-title">Alle tidspunkter</h2>
+      <p className="section-intro">Samlede omkostninger (TCO). Lavest TCO er billigst.</p>
       <div className="table-scroll">
         <table>
           <thead>
@@ -129,74 +209,73 @@ const LEASE_ROWS: readonly { key: keyof LeaseBreakdown; label: string; sign: 1 |
   { key: 'investmentReturn', label: 'Afkast efter skat', sign: -1 },
 ]
 
-function Breakdown({ result }: { result: Result }) {
-  const months = result.comparison.map((row) => row.months)
+function Breakdown({ row }: { row: ComparisonRow }) {
   return (
     <details className="card">
       <summary>
-        <h2>Sådan er tallene regnet</h2>
+        <h2>Sådan er tallene regnet efter {formatMonths(row.months)}</h2>
       </summary>
-      <BreakdownTable
-        caption="Køb"
-        months={months}
-        rows={BUY_ROWS.map((r) => ({ ...r, values: result.comparison.map((c) => c.buy[r.key]) }))}
-        totals={result.comparison.map((c) => c.buy.total)}
-      />
-      <BreakdownTable
-        caption="Leasing"
-        months={months}
-        rows={LEASE_ROWS.map((r) => ({ ...r, values: result.comparison.map((c) => c.lease[r.key]) }))}
-        totals={result.comparison.map((c) => c.lease.total)}
-      />
+      <p className="section-intro">Skift tidspunkt øverst i resultatet.</p>
+      <div className="breakdown-grid">
+        <BreakdownTable
+          caption="Køb med billån"
+          side="buy"
+          rows={BUY_ROWS.map((r) => ({ ...r, value: row.buy[r.key] }))}
+          total={row.buy.total}
+        />
+        <BreakdownTable
+          caption="Privatleasing"
+          side="lease"
+          rows={LEASE_ROWS.map((r) => ({ ...r, value: row.lease[r.key] }))}
+          total={row.lease.total}
+        />
+      </div>
     </details>
   )
 }
 
 interface BreakdownTableProps {
   caption: string
-  months: number[]
-  rows: { key: string; label: string; sign: 1 | -1; values: number[] }[]
-  totals: number[]
+  side: 'buy' | 'lease'
+  rows: { key: string; label: string; sign: 1 | -1; value: number }[]
+  total: number
 }
 
-function BreakdownTable({ caption, months, rows, totals }: BreakdownTableProps) {
+function BreakdownTable({ caption, side, rows, total }: BreakdownTableProps) {
   return (
-    <div className="table-scroll">
+    <div className={`table-scroll breakdown-${side}`}>
       <table>
-        <caption>{caption}</caption>
+        <caption>
+          <span className="dot" aria-hidden="true" />
+          {caption}
+        </caption>
         <thead>
           <tr>
             <th scope="col">Post</th>
-            {months.map((m) => (
-              <th key={m} scope="col" className="num">
-                {formatMonths(m)}
-              </th>
-            ))}
+            <th scope="col" className="num">
+              Beløb
+            </th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.key}>
+          {rows.map((r) => (
+            <tr key={r.key}>
               <th scope="row">
-                {row.sign === -1 ? '− ' : ''}
-                {row.label}
+                {r.sign === -1 ? '− ' : ''}
+                {r.label}
               </th>
-              {row.values.map((v, i) => (
-                <td key={months[i]} className="num">
-                  {formatKr(v)}
-                </td>
-              ))}
+              <td className="num">
+                <AnimatedNumber value={r.value} format={formatKr} />
+              </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
             <th scope="row">TCO</th>
-            {totals.map((v, i) => (
-              <td key={months[i]} className="num">
-                {formatKr(v)}
-              </td>
-            ))}
+            <td className="num">
+              <AnimatedNumber value={total} format={formatKr} />
+            </td>
           </tr>
         </tfoot>
       </table>

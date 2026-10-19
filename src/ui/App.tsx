@@ -143,104 +143,123 @@ function App() {
         </p>
       </header>
 
-      <main className="layout">
+      <main className="page">
         <form className="inputs" onSubmit={(e) => e.preventDefault()} noValidate>
-          <section className="card" aria-labelledby="buy-title">
-            <h2 id="buy-title">Køb med billån</h2>
-            {numberField('purchasePrice', 'Købspris', 'kr.', { hint: 'Faktisk pris efter eventuel rabat.' })}
-            {numberField('downPayment', 'Udbetaling', 'kr.')}
-            {noLoan ? (
-              <p className="info" role="status">
-                Intet lån, da udbetalingen svarer til købsprisen. Felterne om lånet er skjult.
-              </p>
-            ) : (
-              <>
-                {numberField('interestRatePct', 'Debitorrente', '% p.a.')}
-                {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.')}
-                {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
-                  placeholder: hasLoanNeed ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
-                  hint: hasLoanNeed
-                    ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
-                    : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
-                })}
-                {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
-                  placeholder: hasLoanNeed ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
-                  hint: hasLoanNeed
-                    ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
-                    : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
-                })}
-                {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
-              </>
-            )}
-            {periodicField('service', 'Service', 'Ved leasing er service inkluderet.')}
-            <Field id="depreciationPct" label="Afskrivning pr. år" {...depMsg} group>
-              {(describedBy) => (
-                <div className="depreciation">
-                  {form.depreciation.map((value, i) => (
-                    <div key={i} className="depreciation-year">
-                      <label htmlFor={`depreciation-${i}`}>År {i + 1}</label>
-                      <NumberInput
-                        id={`depreciation-${i}`}
-                        value={value}
-                        onChange={(v) =>
-                          setForm((prev) => {
-                            const next = [...prev.depreciation] as FormState['depreciation']
-                            next[i] = v
-                            return { ...prev, depreciation: next }
-                          })
-                        }
-                        onBlur={() => touch('depreciationPct')}
-                        unit="%"
-                        describedBy={describedBy}
-                        invalid={!!depMsg.error}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Field>
-          </section>
-
-          <section className="card card-lease" aria-labelledby="lease-title">
-            <h2 id="lease-title">Privatleasing</h2>
-            <Field id="leaseTermMonths" label="Leasingaftalens løbetid">
-              {(describedBy) => (
-                <Slider
-                  id="leaseTermMonths"
-                  stops={LEASE_TERMS}
-                  value={draft.leaseTermMonths}
-                  onChange={(v) => setNumber('leaseTermMonths', formatInput(v))}
-                  format={(v) => `${v} mdr.`}
-                  tickLabel={(v) => `${v}`}
-                  describedBy={describedBy}
-                />
-              )}
-            </Field>
-            {numberField('leaseInitialPayment', 'Førstegangsydelse', 'kr.')}
-            {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
-            <Field id="includedKmPerYear" label="Inkluderede km pr. år">
-              {(describedBy) => (
-                <Slider
-                  id="includedKmPerYear"
-                  stops={INCLUDED_KM_STOPS}
-                  value={draft.includedKmPerYear}
-                  onChange={(v) => setNumber('includedKmPerYear', formatInput(v))}
-                  format={(v) => `${formatInput(v)} km`}
-                  describedBy={describedBy}
-                />
-              )}
-            </Field>
-            {numberField('excessKmPrice', 'Pris pr. overkørt km', 'kr.')}
-            {numberField('earlyExitCost', 'Exit-omkostning ved førtidig ophør', 'kr.')}
-            {numberField('returnCost', 'Egenbetaling ved aflevering', 'kr.')}
-          </section>
-
-          <section className="card" aria-labelledby="shared-title">
+          <section className="card card-shared" aria-labelledby="shared-title">
             <h2 id="shared-title">Fælles for begge</h2>
-            {periodicField('insurance', 'Forsikring')}
-            {periodicField('ownershipTax', 'Ejerafgift')}
-            {numberField('annualKm', 'Forventet kørsel', 'km/år')}
+            <p className="section-intro">Udgifter og kørsel, der er de samme, uanset om du køber eller leaser.</p>
+            <div className="field-grid">
+              {periodicField('insurance', 'Forsikring')}
+              {periodicField('ownershipTax', 'Ejerafgift')}
+              {numberField('annualKm', 'Forventet kørsel', 'km/år')}
+            </div>
           </section>
+
+          <div className="duel">
+            <section className="card card-side card-buy" aria-labelledby="buy-title">
+              <header className="side-head">
+                <h2 id="buy-title">
+                  <span className="dot" aria-hidden="true" />
+                  Køb med billån
+                </h2>
+                <p>Du ejer bilen og kan sælge den igen.</p>
+              </header>
+              {numberField('purchasePrice', 'Købspris', 'kr.', { hint: 'Faktisk pris efter eventuel rabat.' })}
+              {numberField('downPayment', 'Udbetaling', 'kr.')}
+              {noLoan ? (
+                <p className="info" role="status">
+                  Intet lån, da udbetalingen svarer til købsprisen. Felterne om lånet er skjult.
+                </p>
+              ) : (
+                <>
+                  {numberField('interestRatePct', 'Debitorrente', '% p.a.')}
+                  {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.')}
+                  {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
+                    placeholder: hasLoanNeed ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
+                    hint: hasLoanNeed
+                      ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
+                      : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
+                  })}
+                  {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
+                    placeholder: hasLoanNeed ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
+                    hint: hasLoanNeed
+                      ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
+                      : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
+                  })}
+                  {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
+                </>
+              )}
+              {periodicField('service', 'Service', 'Ved leasing er service inkluderet.')}
+              <Field id="depreciationPct" label="Afskrivning pr. år" {...depMsg} group>
+                {(describedBy) => (
+                  <div className="depreciation">
+                    {form.depreciation.map((value, i) => (
+                      <div key={i} className="depreciation-year">
+                        <label htmlFor={`depreciation-${i}`}>År {i + 1}</label>
+                        <NumberInput
+                          id={`depreciation-${i}`}
+                          value={value}
+                          onChange={(v) =>
+                            setForm((prev) => {
+                              const next = [...prev.depreciation] as FormState['depreciation']
+                              next[i] = v
+                              return { ...prev, depreciation: next }
+                            })
+                          }
+                          onBlur={() => touch('depreciationPct')}
+                          unit="%"
+                          describedBy={describedBy}
+                          invalid={!!depMsg.error}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Field>
+            </section>
+            <div className="vs" aria-hidden="true">
+              <span>vs</span>
+            </div>
+            <section className="card card-side card-lease" aria-labelledby="lease-title">
+              <header className="side-head">
+                <h2 id="lease-title">
+                  <span className="dot" aria-hidden="true" />
+                  Privatleasing
+                </h2>
+                <p>Du lejer bilen og afleverer den, når aftalen slutter.</p>
+              </header>
+              <Field id="leaseTermMonths" label="Leasingaftalens løbetid">
+                {(describedBy) => (
+                  <Slider
+                    id="leaseTermMonths"
+                    stops={LEASE_TERMS}
+                    value={draft.leaseTermMonths}
+                    onChange={(v) => setNumber('leaseTermMonths', formatInput(v))}
+                    format={(v) => `${v} mdr.`}
+                    tickLabel={(v) => `${v}`}
+                    describedBy={describedBy}
+                  />
+                )}
+              </Field>
+              {numberField('leaseInitialPayment', 'Førstegangsydelse', 'kr.')}
+              {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
+              <Field id="includedKmPerYear" label="Inkluderede km pr. år">
+                {(describedBy) => (
+                  <Slider
+                    id="includedKmPerYear"
+                    stops={INCLUDED_KM_STOPS}
+                    value={draft.includedKmPerYear}
+                    onChange={(v) => setNumber('includedKmPerYear', formatInput(v))}
+                    format={(v) => `${formatInput(v)} km`}
+                    describedBy={describedBy}
+                  />
+                )}
+              </Field>
+              {numberField('excessKmPrice', 'Pris pr. overkørt km', 'kr.')}
+              {numberField('earlyExitCost', 'Exit-omkostning ved førtidig ophør', 'kr.')}
+              {numberField('returnCost', 'Egenbetaling ved aflevering', 'kr.')}
+            </section>
+          </div>
 
           <section className="card" aria-labelledby="return-title">
             <h2 id="return-title">Afkast af forskellen</h2>

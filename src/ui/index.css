@@ -91,7 +91,7 @@ h2 {
 }
 
 .page-header {
-  max-width: 1280px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 2.5rem 1rem 1.5rem;
   animation: rise-in 0.6s var(--ease-out) both;
@@ -103,35 +103,18 @@ h2 {
   max-width: 60ch;
 }
 
-.layout {
-  max-width: 1280px;
+.page {
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 1rem 3rem;
   display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 960px) {
-  .layout {
-    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .results {
-    position: sticky;
-    top: 0.5rem;
-    max-height: calc(100vh - 1rem);
-    overflow-y: auto;
-    /* Plads til kortenes skygger inde i scrollområdet. */
-    padding: 0.5rem 1rem 2rem;
-    margin: 0 -1rem;
-  }
+  gap: 1.25rem;
 }
 
 .inputs,
 .results {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
   min-width: 0;
 }
 
@@ -709,8 +692,314 @@ td.winner-lease {
   border: 0;
 }
 
-/* Leasing-kortet bruger leasingfarven (rav) til slidere og fokus. */
-.card-lease {
+
+/* Køb over for leasing */
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+/* Hver side bruger sin egen farve til slidere, fokus og prikker. */
+.card-buy,
+.tile-buy,
+.breakdown-buy {
+  --accent: var(--buy);
+  --accent-soft: var(--buy-soft);
+}
+
+.card-lease,
+.tile-lease,
+.breakdown-lease {
   --accent: var(--lease);
   --accent-soft: var(--lease-soft);
+}
+
+.duel {
+  display: grid;
+  gap: 1.25rem;
+  position: relative;
+}
+
+@media (min-width: 860px) {
+  .duel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .duel-result {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.card-side {
+  position: relative;
+  overflow: hidden;
+  border-top: 0;
+  padding-top: calc(1.35rem + 4px);
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 140px),
+    var(--surface);
+}
+
+.card-side::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--accent);
+}
+
+.card-lease {
+  animation-delay: 80ms;
+}
+
+.side-head {
+  margin-bottom: 1rem;
+}
+
+.side-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  color: var(--accent);
+}
+
+.side-head h2 .dot {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.side-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* "vs" mellem kolonnerne: midt imellem på brede skærme, mellem kortene på smalle. */
+.vs {
+  display: flex;
+  justify-content: center;
+  margin: -0.6rem 0;
+  z-index: 1;
+}
+
+.vs span {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  font: 700 1rem var(--display);
+  color: var(--surface);
+  background: linear-gradient(135deg, var(--buy), var(--lease));
+  box-shadow: var(--shadow-md), 0 0 0 5px var(--bg);
+  animation: pop 0.5s var(--ease-out) 0.25s both;
+}
+
+@media (min-width: 860px) {
+  .duel > .vs {
+    position: absolute;
+    top: 1.1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+  }
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 1.25rem;
+}
+
+.field-grid > .field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 559px) {
+  .field-grid {
+    gap: 1rem;
+  }
+}
+
+/* Resultat: to fliser og en dom imellem */
+
+.summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.summary-head h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.segmented button {
+  font: 500 0.82rem var(--body);
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button.is-active {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+  font-weight: 600;
+}
+
+.segmented button:focus-visible {
+  outline: 2px solid var(--buy);
+  outline-offset: 1px;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-soft);
+  min-width: 0;
+  transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+
+.tile.is-winner {
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
+}
+
+.tile-k {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.tile-v {
+  font: 700 clamp(1.4rem, 3.4vw, 1.9rem) var(--display);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.tile-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  overflow: hidden;
+}
+
+.tile-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.45s var(--ease-out);
+}
+
+.tile-s {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.verdict {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+  min-width: 11rem;
+}
+
+.verdict-who {
+  font: 700 0.95rem var(--display);
+  animation: pop 0.35s var(--ease-out);
+}
+
+.verdict-buy {
+  color: color-mix(in srgb, var(--buy) 55%, var(--bg));
+}
+
+.verdict-lease {
+  color: color-mix(in srgb, var(--lease) 55%, var(--bg));
+}
+
+.verdict-amount {
+  font: 700 1.25rem var(--display);
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-text {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--bg) 70%, var(--text));
+}
+
+/* Opdelingen af TCO side om side */
+
+.breakdown-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 860px) {
+  .breakdown-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.breakdown-grid caption {
+  color: var(--accent);
+}
+
+.breakdown-grid caption .dot {
+  margin-right: 0.45rem;
+  vertical-align: 0.05em;
+}
+
+details[open] > summary {
+  margin-bottom: 0.5rem;
 }
