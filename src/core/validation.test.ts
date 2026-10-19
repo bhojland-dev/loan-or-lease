@@ -51,10 +51,6 @@ describe('validering', () => {
     )
   })
 
-  it('O8: udbetaling > købspris giver fejl', () => {
-    expect(errorFields({ ...UDFYLDT, downPayment: 120001 })).toEqual(['downPayment'])
-  })
-
   it('uden lån ignoreres lånefelterne I3-I7 og I23, også ugyldige værdier', () => {
     const result = validate({
       ...UDFYLDT,
@@ -85,28 +81,30 @@ describe('validering', () => {
     ])
   })
 
-  it('ikke-tal (fx tomt felt i UI) tæller som ikke udfyldt', () => {
-    expect(errorFields({ ...UDFYLDT, purchasePrice: Number.NaN })).toEqual(['purchasePrice'])
-  })
-
   it.each([
-    ['purchasePrice', { purchasePrice: 0, downPayment: 0 }],
-    ['downPayment', { downPayment: -1 }],
-    ['interestRatePct', { interestRatePct: -0.1 }],
-    ['loanTermMonths', { loanTermMonths: 0 }],
-    ['loanTermMonths', { loanTermMonths: 12.5 }],
-    ['registrationFee', { registrationFee: -1 }],
-    ['monthlyLoanFee', { monthlyLoanFee: -1 }],
-    ['service', { service: { amount: -1, frequency: 'year' } }],
-    ['depreciationPct', { depreciationPct: [20, 14.5, 101, 14.5] }],
-    ['leaseTermMonths', { leaseTermMonths: 30 }],
-    ['leaseMonthlyPayment', { leaseMonthlyPayment: 0 }],
-    ['interestDeductionPct', { interestDeductionPct: 101 }],
-    ['annualKm', { annualKm: 5000 }],
-    ['annualKm', { annualKm: 17500 }],
-    ['returnTaxPct', { returnTaxPct: 101 }],
-  ] as const)('%s: ugyldig værdi giver fejl', (field, change) => {
-    expect(errorFields({ ...UDFYLDT, ...change })).toEqual([field])
+    ['purchasePrice', 'notPositive', { purchasePrice: 0, downPayment: 0 }],
+    ['downPayment', 'negative', { downPayment: -1 }],
+    ['downPayment', 'exceedsPurchasePrice', { downPayment: 120001 }],
+    ['interestRatePct', 'negative', { interestRatePct: -0.1 }],
+    ['loanTermMonths', 'notWholeMonths', { loanTermMonths: 0 }],
+    ['loanTermMonths', 'notWholeMonths', { loanTermMonths: 12.5 }],
+    ['registrationFee', 'negative', { registrationFee: -1 }],
+    ['monthlyLoanFee', 'negative', { monthlyLoanFee: -1 }],
+    ['service', 'negative', { service: { amount: -1, frequency: 'year' } }],
+    ['service', 'missingFrequency', { service: { amount: 3000 } }],
+    ['service', 'required', { service: { frequency: 'year' } }],
+    ['depreciationPct', 'depreciationOutOfRange', { depreciationPct: [20, 14.5, 101, 14.5] }],
+    ['depreciationPct', 'depreciationIncomplete', { depreciationPct: [20, 14.5, Number.NaN, 14.5] }],
+    ['leaseTermMonths', 'invalidLeaseTerm', { leaseTermMonths: 30 }],
+    ['leaseMonthlyPayment', 'notPositive', { leaseMonthlyPayment: 0 }],
+    ['interestDeductionPct', 'percentOutOfRange', { interestDeductionPct: 101 }],
+    ['annualKm', 'invalidKm', { annualKm: 5000 }],
+    ['annualKm', 'invalidKm', { annualKm: 17500 }],
+    ['returnTaxPct', 'percentOutOfRange', { returnTaxPct: 101 }],
+    ['purchasePrice', 'required', { purchasePrice: Number.NaN }],
+  ] as const)('%s: %s', (field, code, change) => {
+    const result = validate({ ...UDFYLDT, ...change })
+    expect(result.ok ? [] : result.errors).toEqual([{ field, code }])
   })
 
   it('afkast regnes altid med: I21 og I22 er påkrævede', () => {

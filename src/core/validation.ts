@@ -13,11 +13,10 @@ import type {
   NumberField,
   PeriodicAmount,
   PeriodicField,
+  ValidationCode,
   ValidationError,
   ValidationResult,
 } from './types.ts'
-
-const REQUIRED = 'Feltet skal udfyldes.'
 
 function isNumber(value: number | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value)
@@ -25,7 +24,7 @@ function isNumber(value: number | undefined): value is number {
 
 export function validate(draft: InputDraft, settings: Settings = DEFAULT_SETTINGS): ValidationResult {
   const errors: ValidationError[] = []
-  const add = (field: InputField, message: string) => errors.push({ field, message })
+  const add = (field: InputField, code: ValidationCode) => errors.push({ field, code })
 
   // Lånefelterne bruges kun ved lån (B1 > 0). Mangler købspris eller udbetaling, regnes der ikke med lån.
   const loanNeed =
@@ -48,28 +47,28 @@ export function validate(draft: InputDraft, settings: Settings = DEFAULT_SETTING
     } else if (spec.computedDefault && value === undefined) {
       numbers[field] = computedDefaults[field] ?? 0
     } else if (!isNumber(value)) {
-      add(field, REQUIRED)
+      add(field, 'required')
       numbers[field] = 0
     } else {
-      if (!spec.isValid(value)) add(field, spec.message)
+      if (!spec.isValid(value)) add(field, spec.code)
       numbers[field] = value
     }
   }
 
   if (isNumber(draft.purchasePrice) && isNumber(draft.downPayment) && draft.downPayment > draft.purchasePrice) {
-    add('downPayment', 'Udbetalingen må ikke være større end købsprisen.')
+    add('downPayment', 'exceedsPurchasePrice')
   }
 
-  // Beløb med frekvens. Kun én fejl pr. felt: mangler beløbet, er "Feltet skal udfyldes" nok.
+  // Beløb med frekvens. Kun én fejl pr. felt: mangler beløbet, er 'required' nok.
   function periodic(field: PeriodicField): PeriodicAmount {
     const { amount, frequency } = draft[field] ?? {}
     if (!isNumber(amount)) {
-      add(field, REQUIRED)
+      add(field, 'required')
       return { amount: 0, frequency: 'month' }
     }
-    if (amount < 0) add(field, 'Beløbet må ikke være negativt.')
+    if (amount < 0) add(field, 'negative')
     if (!isFrequency(frequency)) {
-      add(field, 'Vælg en frekvens.')
+      add(field, 'missingFrequency')
       return { amount, frequency: 'month' }
     }
     return { amount, frequency }
@@ -81,9 +80,9 @@ export function validate(draft: InputDraft, settings: Settings = DEFAULT_SETTING
   const depreciation = draft.depreciationPct
   let depreciationPct: DepreciationPct = [0, 0, 0, 0]
   if (depreciation === undefined || depreciation.length !== 4 || !depreciation.every(isNumber)) {
-    add('depreciationPct', 'Udfyld afskrivning for alle fire år.')
+    add('depreciationPct', 'depreciationIncomplete')
   } else {
-    if (!depreciation.every((v) => v >= 0 && v <= 100)) add('depreciationPct', 'Afskrivningen skal være mellem 0 og 100 %.')
+    if (!depreciation.every((v) => v >= 0 && v <= 100)) add('depreciationPct', 'depreciationOutOfRange')
     depreciationPct = depreciation
   }
 

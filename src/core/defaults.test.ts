@@ -60,6 +60,6 @@ describe('indstillinger udefra (fx fra en API)', () => {
   it('advarslen om høj kørsel følger grænsen i indstillingerne', () => {
     expect(warnings({ annualKm: 25000 })).toHaveLength(1)
     expect(warnings({ annualKm: 25000 }, custom)).toHaveLength(0)
-    expect(warnings({ annualKm: 35000 }, custom)[0].message).toContain('30.000 km')
+    expect(warnings({ annualKm: 35000 }, custom)[0].limitKmPerYear).toBe(30000)
   })
 })

@@ -6,7 +6,7 @@ Online: https://bhojland-dev.github.io/loan-or-lease/
 
 ## Struktur
 
-- `src/core/` – beregningsmotoren. Ren TypeScript uden React eller browser-API'er, så den kan genbruges, fx i en iOS-app.
+- `src/core/` – beregningsmotoren. Ren TypeScript uden React, browser-API'er eller brugertekster, så den kan genbruges, fx i en iOS-app. Fejl, advarsler og noter gives som koder.
   - `createDefaultDraft()` giver startværdier, `validate()` gør input klar, og `calculate()` giver resultatet.
   - `defaults.ts` – alle standardværdier og satser i ét `Settings`-objekt. Skal satserne komme fra en API, hentes de uden for motoren og sendes ind.
   - `fields.ts` – reglerne for hvert talfelt (id i SPEC.md, gælder ved lån, gyldighed, fejlbesked).
@@ -15,10 +15,11 @@ Online: https://bhojland-dev.github.io/loan-or-lease/
 - `src/ui/` – React-brugerfladen. Den regner ikke selv, men kalder `src/core`.
   - `useFormState.ts` – formularens tilstand; `form.ts` – rene overgange og gemning i browseren.
   - `fieldText.ts` – etiketter, enheder og hjælpetekster for hvert felt.
+  - `messages.ts` – danske tekster til motorens koder for fejl, advarsler og noter. Motoren selv indeholder ingen brugertekster.
   - `cards/` – ét kort pr. del af formularen; `results/` – én fil pr. del af resultatet.
   - `styles/` – CSS delt efter emne; `tokens.css` har farver og fonte.
 
-Et nyt talfelt tilføjes i `types.ts` (`InputDraft` og `Inputs`), `fields.ts`, `fieldText.ts`, evt. `DEFAULT_SETTINGS` og det kort, det skal stå på.
+Et nyt talfelt tilføjes i `types.ts` (`InputDraft` og `Inputs`), `fields.ts`, `fieldText.ts`, evt. `DEFAULT_SETTINGS` og det kort, det skal stå på. En ny fejlkode tilføjes i `ValidationCode` og får sin tekst i `messages.ts`; typecheck fejler, indtil teksten findes.
 
 ## Kom i gang
 

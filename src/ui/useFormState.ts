@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { calculate, calculateLoanNeed, FIELD_NOTES, validate, warnings } from '../core/index.ts'
-import type { Frequency, InputDraft, InputField, NumberField, PeriodicField } from '../core/index.ts'
+import type { Frequency, InputDraft, InputField, NumberField, PeriodicField, ValidationError } from '../core/index.ts'
 import type { FieldMessages } from './fields.tsx'
 import { formatInput } from './format.ts'
 import {
@@ -21,8 +21,7 @@ import {
   withPeriodic,
 } from './form.ts'
 import type { FormState } from './form.ts'
-
-const UNREADABLE = 'Skriv et tal, fx 1.234,50.'
+import { noteText, UNREADABLE_MESSAGE, validationMessage, warningMessage } from './messages.ts'
 
 /** Lånebehovet (B1), når både købspris og udbetaling er udfyldt med tal. */
 function loanNeedOf(draft: InputDraft): number | undefined {
@@ -46,8 +45,8 @@ export function useFormState() {
   const unreadable = useMemo(() => unreadableFields(form), [form])
 
   const errors = useMemo(() => {
-    const map = new Map<InputField, string>()
-    if (!validation.ok) for (const e of validation.errors) if (!map.has(e.field)) map.set(e.field, e.message)
+    const map = new Map<InputField, ValidationError>()
+    if (!validation.ok) for (const e of validation.errors) if (!map.has(e.field)) map.set(e.field, e)
     return map
   }, [validation])
 
@@ -80,12 +79,17 @@ export function useFormState() {
 
     /** Fejl, advarsel, note og hjælpetekst for et felt. Fejl vises først, når feltet er forladt. */
     messages(field: InputField, hint?: string): FieldMessages {
-      const error = unreadable.has(field) ? UNREADABLE : touched.has(field) ? errors.get(field) : undefined
+      const error = errors.get(field)
+      const note = FIELD_NOTES.find((n) => n.field === field)
       return {
         hint,
-        error,
-        warning: field === kmWarning?.field ? kmWarning.message : undefined,
-        note: FIELD_NOTES.find((n) => n.field === field)?.text,
+        error: unreadable.has(field)
+          ? UNREADABLE_MESSAGE
+          : touched.has(field) && error
+            ? validationMessage(error)
+            : undefined,
+        warning: kmWarning && field === kmWarning.field ? warningMessage(kmWarning) : undefined,
+        note: note && noteText(note.code),
       }
     },
 

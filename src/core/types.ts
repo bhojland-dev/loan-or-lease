@@ -69,9 +69,26 @@ export type PeriodicField = 'service' | 'insurance' | 'ownershipTax'
 /** Felter med ét tal. */
 export type NumberField = Exclude<InputField, PeriodicField | 'depreciationPct'>
 
+/**
+ * Hvad der er galt med et felt. Motoren giver kun koden; brugerfladen bestemmer ordlyden,
+ * så motoren kan genbruges med andre tekster og sprog (fx i en iOS-app).
+ */
+export type ValidationCode =
+  | 'required' // feltet er tomt eller ikke et tal
+  | 'notPositive' // skal være større end 0
+  | 'negative' // må ikke være negativ
+  | 'notWholeMonths' // skal være et helt antal måneder større end 0
+  | 'percentOutOfRange' // skal være mellem 0 og 100
+  | 'invalidKm' // ikke en af de tilladte km-værdier (KM_STOPS)
+  | 'invalidLeaseTerm' // ikke en af de tilladte løbetider (LEASE_TERMS)
+  | 'exceedsPurchasePrice' // udbetalingen er større end købsprisen (O8)
+  | 'missingFrequency' // beløb uden frekvens
+  | 'depreciationIncomplete' // ikke alle fire år er udfyldt
+  | 'depreciationOutOfRange' // et år er uden for 0-100 %
+
 export interface ValidationError {
   field: InputField
-  message: string
+  code: ValidationCode
 }
 
 export type ValidationResult =
@@ -154,10 +171,19 @@ export interface BreakEvenRow {
   expectedDepreciation: number
 }
 
+/** O4. Grænsen følger med, så teksten kan nævne den. */
 export interface Warning {
-  code: 'highMileage' // O4
+  code: 'highMileage'
   field: InputField
-  message: string
+  limitKmPerYear: number
+}
+
+/** O5 og O9: noter, der vises ved et felt. Teksten ligger i brugerfladen. */
+export type NoteCode = 'depreciationSource' | 'returnInsurance'
+
+export interface FieldNote {
+  field: InputField
+  code: NoteCode
 }
 
 export interface Result {
