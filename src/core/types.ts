@@ -1,4 +1,4 @@
-// Typer for beregningsmotoren. Id'er (I1-I22, B1-B6, O1-O8) henviser til SPEC.md.
+// Typer for beregningsmotoren. Id'er (I1-I23, B1-B7, O1-O10) henviser til SPEC.md.
 
 export type Frequency = 'month' | 'quarter' | 'halfYear' | 'year'
 
@@ -72,7 +72,7 @@ export type ValidationResult =
   | { ok: true; inputs: Inputs }
   | { ok: false; errors: ValidationError[] }
 
-/** B1-B6 */
+/** B1-B5 og lånets løbetid. Restgæld (B6) og rentefradrag (B7) beregnes i loan.ts. */
 export interface Loan {
   loanNeed: number // B1
   principal: number // B2

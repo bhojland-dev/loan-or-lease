@@ -1,4 +1,4 @@
-// Visning af O1-O3. Alle tal kommer fra src/core.
+// Visning af O1-O3 og O10. Alle tal kommer fra src/core.
 
 import { useState } from 'react'
 import type { BuyBreakdown, Cheapest, ComparisonRow, LeaseBreakdown, MonthlyCosts, Result } from '../core/index.ts'
@@ -74,7 +74,7 @@ function Summary({ result, row, onChoose }: { result: Result; row: ComparisonRow
           ) : (
             <>
               <span key={row.cheapest} className={`verdict-who verdict-${row.cheapest}`}>
-                {row.cheapest === 'buy' ? 'Køb' : 'Leasing'} er billigst
+                {CHEAPEST_LABEL[row.cheapest]} er billigst
               </span>
               <span className="verdict-amount">
                 <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} />
@@ -127,11 +127,13 @@ interface MonthlyTableProps {
 }
 
 function MonthlyTable({ side, caption, paymentLabel, costs }: MonthlyTableProps) {
-  const lines: { label: string; value: number; hidden?: boolean }[] = [
+  const isLease = side === 'lease'
+  // Tekst i stedet for et beløb, hvor leasing ikke har posten.
+  const lines: { label: string; value: number; text?: string }[] = [
     { label: paymentLabel, value: costs.payment },
     { label: 'Forsikring', value: costs.insurance },
     { label: 'Ejerafgift', value: costs.ownershipTax },
-    { label: 'Service', value: costs.service, hidden: side === 'lease' },
+    { label: 'Service', value: costs.service, text: isLease ? 'Inkluderet' : undefined },
   ]
   return (
     <div className={`table-scroll monthly-${side}`}>
@@ -141,22 +143,12 @@ function MonthlyTable({ side, caption, paymentLabel, costs }: MonthlyTableProps)
           {caption}
         </caption>
         <tbody>
-          {lines
-            .filter((l) => !l.hidden)
-            .map((l) => (
-              <tr key={l.label}>
-                <th scope="row">{l.label}</th>
-                <td className="num">
-                  <AnimatedNumber value={l.value} format={formatKr} />
-                </td>
-              </tr>
-            ))}
-          {side === 'lease' && (
-            <tr>
-              <th scope="row">Service</th>
-              <td className="num muted">Inkluderet</td>
+          {lines.map((l) => (
+            <tr key={l.label}>
+              <th scope="row">{l.label}</th>
+              <td className="num">{l.text ? <span className="muted">{l.text}</span> : <AnimatedNumber value={l.value} format={formatKr} />}</td>
             </tr>
-          )}
+          ))}
           <tr className="subtotal">
             <th scope="row">Pr. måned før skat</th>
             <td className="num">
@@ -166,7 +158,7 @@ function MonthlyTable({ side, caption, paymentLabel, costs }: MonthlyTableProps)
           <tr>
             <th scope="row">− Rentefradrag</th>
             <td className="num">
-              {side === 'lease' ? <span className="muted">Intet fradrag</span> : <AnimatedNumber value={costs.interestDeduction} format={formatKr} />}
+              {isLease ? <span className="muted">Intet fradrag</span> : <AnimatedNumber value={costs.interestDeduction} format={formatKr} />}
             </td>
           </tr>
         </tbody>
@@ -272,7 +264,7 @@ function BreakEven({ result }: { result: Result }) {
 const BUY_ROWS: readonly { key: keyof BuyBreakdown; label: string; sign: 1 | -1 }[] = [
   { key: 'downPayment', label: 'Udbetaling', sign: 1 },
   { key: 'loanPayments', label: 'Låneydelser inkl. gebyr', sign: 1 },
-  { key: 'remainingDebt', label: 'Restgæld på lånet (indfries ved t)', sign: 1 },
+  { key: 'remainingDebt', label: 'Restgæld på lånet (indfries ved salg)', sign: 1 },
   { key: 'insurance', label: 'Forsikring', sign: 1 },
   { key: 'ownershipTax', label: 'Ejerafgift', sign: 1 },
   { key: 'service', label: 'Service', sign: 1 },

@@ -1,9 +1,9 @@
-// Advarsler og noter (SPEC.md O4-O7), der vises ved de relevante felter.
+// Advarsel (SPEC.md O4) og noter (O5 og O9), der vises ved de relevante felter.
 
 import { HIGH_MILEAGE_KM_PER_YEAR } from './defaults.ts'
 import type { InputField, Inputs, Warning } from './types.ts'
 
-export const HIGH_MILEAGE_WARNING =
+const HIGH_MILEAGE_WARNING =
   'Du kører over 20.000 km om året. Restværdien ved køb kan være sat for højt, og afskrivningsprocenterne bør hæves.'
 
 export interface FieldNote {

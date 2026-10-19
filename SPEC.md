@@ -44,7 +44,7 @@ Alle beregninger udføres for hvert tidspunkt t = 12, 24, 36, 48 mdr., hvor t �
 
 | Id | Størrelse | Beregning |
 | --- | --- | --- |
-| B1 | Lånebehov L | I1 − I2. Er L = 0, er der intet lån, og B2-B6 er 0 |
+| B1 | Lånebehov L | I1 − I2. Er L = 0, er der intet lån, og B2-B7 er 0 |
 | B2 | Hovedstol H | L + I5 + I6. Omkostningerne beregnes af L, ikke af H |
 | B3 | Månedsrente r | I3 / 12 |
 | B4 | Ydelse A (rente + afdrag) | H × r / (1 − (1 + r)^−I4). Ved r = 0: H / I4 |

@@ -32,6 +32,11 @@ describe('indtastning af danske tal', () => {
     ['  3.000 kr. ', 3000],
     ['0,25 %', 0.25],
     ['-1', -1],
+    ['3.95', 3.95], // punktum som decimaltegn, ikke 395
+    ['0.8', 0.8],
+    ['1.234.567', 1234567],
+    ['1.234,5', 1234.5],
+    [',5', 0.5],
   ])('"%s" → %f', (text, expected) => {
     expect(parseDanishNumber(text)).toBe(expected)
   })
@@ -41,7 +46,7 @@ describe('indtastning af danske tal', () => {
     expect(parseDanishNumber('  ')).toBeUndefined()
   })
 
-  it.each(['abc', '1,2,3', ',', '12a'])('"%s" er ugyldigt', (text) => {
+  it.each(['abc', '1,2,3', ',', '12a', '1.2.3', '12.34,5'])('"%s" er ugyldigt', (text) => {
     expect(parseDanishNumber(text)).toBeNaN()
   })
 })

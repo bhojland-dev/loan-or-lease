@@ -2,11 +2,18 @@
 
 import type { Frequency, PeriodicAmount } from './types.ts'
 
-export const FREQUENCY_MONTHS: Record<Frequency, number> = {
+const FREQUENCY_MONTHS: Record<Frequency, number> = {
   month: 1,
   quarter: 3,
   halfYear: 6,
   year: 12,
+}
+
+/** De mulige frekvenser for I8, I10 og I11. */
+export const FREQUENCIES = Object.keys(FREQUENCY_MONTHS) as Frequency[]
+
+export function isFrequency(value: unknown): value is Frequency {
+  return typeof value === 'string' && (FREQUENCIES as string[]).includes(value)
 }
 
 /** Antal betalinger ved tidspunkt t = t / frekvens i måneder. */

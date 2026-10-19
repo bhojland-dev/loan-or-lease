@@ -26,12 +26,16 @@ export function formatMonths(months: number): string {
 }
 
 /**
- * Dansk tal fra et inputfelt: "1.234,50" → 1234.5. Punktum er tusindtalsseparator og komma decimaltegn.
- * Tomt felt giver `undefined`, ugyldigt tal giver `NaN`.
+ * Dansk tal fra et inputfelt: "1.234,50" → 1234.5. Komma er decimaltegn, og punktum er tusindtalsseparator,
+ * når det deler tallet i grupper af tre ("200.000"). Ellers læses et enkelt punktum som decimaltegn,
+ * så "3.95" bliver 3,95 og ikke 395. Tomt felt giver `undefined`, ugyldigt tal giver `NaN`.
  */
 export function parseDanishNumber(text: string): number | undefined {
   const cleaned = text.replace(/\s|kr\.?|%/gi, '')
   if (cleaned === '') return undefined
-  if (!/^-?[\d.]*,?\d*$/.test(cleaned) || !/\d/.test(cleaned)) return Number.NaN
-  return Number(cleaned.replace(/\./g, '').replace(',', '.'))
+  // Heltal med tusindtalspunktummer og evt. komma-decimaler: "1.234", "1.234,5", "-200.000"
+  if (/^-?\d{1,3}(\.\d{3})+(,\d*)?$/.test(cleaned)) return Number(cleaned.replace(/\./g, '').replace(',', '.'))
+  // Uden tusindtalspunktummer: "1234,5", "3,95", "3.95", ",5"
+  if (/^-?(\d+([.,]\d*)?|[.,]\d+)$/.test(cleaned)) return Number(cleaned.replace(',', '.'))
+  return Number.NaN
 }

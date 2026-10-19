@@ -1,11 +1,13 @@
 // Formularens tilstand (tekst som brugeren har skrevet) og oversættelse til motorens InputDraft.
 
-import { createDefaultDraft } from '../core/index.ts'
+import { createDefaultDraft, isFrequency } from '../core/index.ts'
 import type { Frequency, InputDraft, InputField } from '../core/index.ts'
 import { formatInput, parseDanishNumber } from './format.ts'
 
 export type NumberField = Exclude<InputField, 'service' | 'insurance' | 'ownershipTax' | 'depreciationPct'>
 export type PeriodicField = 'service' | 'insurance' | 'ownershipTax'
+
+const PERIODIC_FIELDS: readonly PeriodicField[] = ['service', 'insurance', 'ownershipTax']
 
 export interface PeriodicText {
   amount: string
@@ -54,7 +56,7 @@ export function initialFormState(): FormState {
 export function toDraft(form: FormState): InputDraft {
   const draft: InputDraft = {}
   for (const field of NUMBER_FIELDS) draft[field] = parseDanishNumber(form.numbers[field])
-  for (const field of ['service', 'insurance', 'ownershipTax'] as const) {
+  for (const field of PERIODIC_FIELDS) {
     const { amount, frequency } = form.periodic[field]
     draft[field] = { amount: parseDanishNumber(amount), frequency: frequency === '' ? undefined : frequency }
   }
@@ -68,7 +70,7 @@ export function unreadableFields(form: FormState): Set<InputField> {
   const fields = new Set<InputField>()
   const bad = (text: string) => Number.isNaN(parseDanishNumber(text))
   for (const field of NUMBER_FIELDS) if (bad(form.numbers[field])) fields.add(field)
-  for (const field of ['service', 'insurance', 'ownershipTax'] as const) if (bad(form.periodic[field].amount)) fields.add(field)
+  for (const field of PERIODIC_FIELDS) if (bad(form.periodic[field].amount)) fields.add(field)
   if (form.depreciation.some(bad)) fields.add('depreciationPct')
   return fields
 }
@@ -105,15 +107,12 @@ export function loadFormState(): FormState | null {
   for (const field of NUMBER_FIELDS) numbers[field] = text(saved.numbers?.[field], base.numbers[field])
 
   const periodic = { ...base.periodic }
-  for (const field of ['service', 'insurance', 'ownershipTax'] as const) {
+  for (const field of PERIODIC_FIELDS) {
     const s = saved.periodic?.[field]
     const frequency = s?.frequency
     periodic[field] = {
       amount: text(s?.amount, base.periodic[field].amount),
-      frequency:
-        frequency === '' || frequency === 'month' || frequency === 'quarter' || frequency === 'halfYear' || frequency === 'year'
-          ? frequency
-          : base.periodic[field].frequency,
+      frequency: frequency === '' || isFrequency(frequency) ? frequency : base.periodic[field].frequency,
     }
   }
 

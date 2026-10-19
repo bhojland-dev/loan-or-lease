@@ -7,9 +7,9 @@ import {
   LEASE_TERMS,
 } from './defaults.ts'
 import { calculateLoanNeed } from './loan.ts'
+import { isFrequency } from './runningCosts.ts'
 import type {
   DepreciationPct,
-  Frequency,
   InputDraft,
   InputField,
   LeaseTerm,
@@ -17,8 +17,6 @@ import type {
   ValidationError,
   ValidationResult,
 } from './types.ts'
-
-const FREQUENCIES: readonly Frequency[] = ['month', 'quarter', 'halfYear', 'year']
 
 const REQUIRED = 'Feltet skal udfyldes.'
 
@@ -51,7 +49,7 @@ export function validate(draft: InputDraft): ValidationResult {
   function periodic(field: InputField, value: Partial<PeriodicAmount> | undefined): PeriodicAmount {
     const amount = required(field, value?.amount, (v) => v >= 0, 'Beløbet må ikke være negativt.')
     const frequency = value?.frequency
-    if (frequency === undefined || !FREQUENCIES.includes(frequency)) {
+    if (!isFrequency(frequency)) {
       // Kun én fejl pr. felt: mangler beløbet, er "Feltet skal udfyldes" nok.
       if (isNumber(value?.amount)) add(field, 'Vælg en frekvens.')
       return { amount, frequency: 'month' }

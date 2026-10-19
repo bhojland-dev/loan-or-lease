@@ -25,23 +25,21 @@ export const DEPRECIATION_PCT: DepreciationPct = [20, 14.5, 14.5, 14.5]
 export const OWNERSHIP_TAX_AMOUNT = 460
 export const OWNERSHIP_TAX_FREQUENCY: Frequency = 'halfYear'
 
-// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000. Kilde: SPEC.md (2026).
+// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000, standard 15.000. Kilde: SPEC.md (2026).
 export const ANNUAL_KM = 15000
-
-// I13 leasingaftalens løbetid. Kilde: SPEC.md (2026).
-export const LEASE_TERM_MONTHS: LeaseTerm = 48
-export const LEASE_TERMS: readonly LeaseTerm[] = [12, 24, 36, 48]
-
-// I12: km/år vælges mellem 10.000 og 45.000 i trin af 5.000. Kilde: SPEC.md (2026).
-export const KM_MIN = 10000
-export const KM_MAX = 45000
-export const KM_STEP = 5000
+const KM_MIN = 10000
+const KM_MAX = 45000
+const KM_STEP = 5000
 
 /** De tilladte værdier for I12. */
 export const KM_STOPS: readonly number[] = Array.from(
   { length: (KM_MAX - KM_MIN) / KM_STEP + 1 },
   (_, i) => KM_MIN + i * KM_STEP,
 )
+
+// I13 leasingaftalens løbetid. Kilde: SPEC.md (2026).
+export const LEASE_TERM_MONTHS: LeaseTerm = 48
+export const LEASE_TERMS: readonly LeaseTerm[] = [12, 24, 36, 48]
 
 // I19 egenbetaling ved aflevering. Kilde: SPEC.md (2026), jf. If, tilbageleveringsforsikring (Leasing Super).
 export const RETURN_COST = 5000
@@ -59,8 +57,8 @@ export const INTEREST_DEDUCTION_PCT = 33
 // O4: advarsel ved kørsel over denne grænse (km/år). Kilde: SPEC.md (2026).
 export const HIGH_MILEAGE_KM_PER_YEAR = 20000
 
-// Tidspunkter, der sammenlignes (mdr.). Kilde: SPEC.md (2026).
-export const COMPARISON_MONTHS: readonly LeaseTerm[] = [12, 24, 36, 48]
+// Tidspunkter t, der sammenlignes (mdr.): de samme som de mulige løbetider. Kilde: SPEC.md (2026).
+export const COMPARISON_MONTHS: readonly LeaseTerm[] = LEASE_TERMS
 
 /** Standardværdi for I5 beregnet af lånebehovet L. */
 export function defaultRegistrationFee(loanNeed: number): number {

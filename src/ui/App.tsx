@@ -10,16 +10,24 @@ import {
   validate,
   warnings,
 } from '../core/index.ts'
-import type { InputField } from '../core/index.ts'
+import type { InputDraft, InputField } from '../core/index.ts'
 import { Field, FrequencySelect, NumberInput, Slider } from './fields.tsx'
-import { CompareIcon, ResetIcon } from './icons.tsx'
 import type { FieldMessages } from './fields.tsx'
+import { CompareIcon, ResetIcon } from './icons.tsx'
 import { formatInput, formatKr, parseDanishNumber } from './format.ts'
 import { clearFormState, initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
 import type { FormState, NumberField, PeriodicField } from './form.ts'
 import { Results } from './Results.tsx'
 
 const UNREADABLE = 'Skriv et tal, fx 1.234,50.'
+
+/** Lånebehovet (B1), når både købspris og udbetaling er udfyldt med tal. */
+function loanNeedOf(draft: InputDraft): number | undefined {
+  const { purchasePrice, downPayment } = draft
+  if (purchasePrice === undefined || downPayment === undefined) return undefined
+  const need = calculateLoanNeed(purchasePrice, downPayment)
+  return Number.isFinite(need) ? need : undefined
+}
 
 function App() {
   // `form` er det, der står i felterne. `calcForm` er det, der regnes på: tekstfelter
@@ -44,16 +52,8 @@ function App() {
     calcDraft.annualKm !== undefined && Number.isFinite(calcDraft.annualKm)
       ? warnings({ annualKm: calcDraft.annualKm })[0]
       : undefined
-  const liveLoanNeed =
-    draft.purchasePrice !== undefined && draft.downPayment !== undefined
-      ? calculateLoanNeed(draft.purchasePrice, draft.downPayment)
-      : Number.NaN
-  const hasLoanNeed = Number.isFinite(liveLoanNeed)
-  const loanNeed = liveLoanNeed
-  const calcLoanNeed =
-    calcDraft.purchasePrice !== undefined && calcDraft.downPayment !== undefined
-      ? calculateLoanNeed(calcDraft.purchasePrice, calcDraft.downPayment)
-      : Number.NaN
+  // Standardværdierne for I5 og I6 følger det, der står i felterne lige nu.
+  const loanNeed = loanNeedOf(draft)
 
   function messages(field: InputField, hint?: string): FieldMessages {
     const error = unreadable.has(field) ? UNREADABLE : touched.has(field) ? errors.get(field) : undefined
@@ -160,8 +160,8 @@ function App() {
 
   const depMsg = messages('depreciationPct')
   // Lånefelterne skjules først, når udbetalingen er bekræftet (feltet forladt).
-  const noLoan = calcLoanNeed === 0
-  const missingCount = validation.ok ? 0 : new Set(validation.errors.map((e) => e.field)).size
+  const noLoan = loanNeedOf(calcDraft) === 0
+  const problemCount = validation.ok ? 0 : new Set(validation.errors.map((e) => e.field)).size
 
   return (
     <>
@@ -244,16 +244,18 @@ function App() {
                   {numberField('interestRatePct', 'Debitorrente', '% p.a.')}
                   {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.')}
                   {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
-                    placeholder: hasLoanNeed ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
-                    hint: hasLoanNeed
-                      ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
-                      : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
+                    placeholder: loanNeed !== undefined ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
+                    hint:
+                      loanNeed !== undefined
+                        ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
+                        : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
                   })}
                   {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
-                    placeholder: hasLoanNeed ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
-                    hint: hasLoanNeed
-                      ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
-                      : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
+                    placeholder: loanNeed !== undefined ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
+                    hint:
+                      loanNeed !== undefined
+                        ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
+                        : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
                   })}
                   {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
                   {numberField('interestDeductionPct', 'Fradragsprocent for renter', '%', {
@@ -334,7 +336,7 @@ function App() {
           </section>
         </form>
 
-        <div className="results" aria-live="polite">
+        <div className="results">
           {result ? (
             <Results result={result} />
           ) : (
@@ -342,18 +344,15 @@ function App() {
               <h2>Resultat</h2>
               <p>
                 Udfyld de påkrævede felter for at se sammenligningen.{' '}
-                {missingCount > 0 && (
-                  <>
-                    {missingCount === 1 ? 'Der mangler 1 felt.' : `Der mangler ${missingCount} felter.`}
-                  </>
-                )}
+                {problemCount === 1 && '1 felt mangler eller skal rettes.'}
+                {problemCount > 1 && `${problemCount} felter mangler eller skal rettes.`}
               </p>
               <button
                 type="button"
                 className="button"
                 onClick={() => setTouched(new Set(validation.ok ? [] : validation.errors.map((e) => e.field)))}
               >
-                Vis manglende felter
+                Vis felterne
               </button>
             </section>
           )}

@@ -12,8 +12,8 @@ Al forretningslogik er beskrevet i `SPEC.md`. Den er facit: følg den præcist, 
 
 ## Struktur
 
-- `src/core/` – beregningsmotoren. Ren TypeScript uden React, DOM eller browser-API'er. Input (I1-I22) ind, output (O1-O3 + advarsler) ud.
-- `src/core/*.test.ts` – tests for hver formel i SPEC.md (B1-B6, restværdi, løbende udgifter, TCO køb, TCO leasing, afkast, break-even). Brug navngivne regneeksempler, så de kan genbruges til en senere iOS-version.
+- `src/core/` – beregningsmotoren. Ren TypeScript uden React, DOM eller browser-API'er. Input (I1-I23, se SPEC.md for udgåede numre) ind, output (O1-O4 og O10) ud.
+- `src/core/*.test.ts` – tests for hver formel i SPEC.md (B1-B7, restværdi, løbende udgifter, TCO køb, TCO leasing, afkast, break-even, månedlige udgifter). Brug navngivne regneeksempler, så de kan genbruges til en senere iOS-version.
 - `src/ui/` – React-komponenter. Ingen beregninger her; UI kalder kun `src/core`.
 
 ## Konventioner
@@ -21,7 +21,7 @@ Al forretningslogik er beskrevet i `SPEC.md`. Den er facit: følg den præcist, 
 - Brugerfladen er på dansk.
 - Beløb vises i kr. med dansk formatering (fx 1.234,50 kr.), procenter med komma.
 - Alle standardværdier fra SPEC.md samles ét sted (`src/core/defaults.ts`) med kilde og årstal i kommentar.
-- Noter og advarsler (O4-O7) vises ved de relevante felter.
+- Advarsler og noter (O4, O5 og O9) vises ved de relevante felter.
 
 ## GitHub
 

@@ -1,6 +1,7 @@
 // Formularfelter med fejl, noter og advarsler ved feltet.
 
 import type { CSSProperties, ReactNode } from 'react'
+import { FREQUENCIES } from '../core/index.ts'
 import type { Frequency } from '../core/index.ts'
 
 export interface FieldMessages {
@@ -40,14 +41,14 @@ export function Field({ id, label, error, warning, note, hint, group, children }
 
   if (group) {
     return (
-      <fieldset className={`field${error ? ' has-error' : ''}`}>
+      <fieldset className="field">
         <legend className="field-label">{label}</legend>
         {body}
       </fieldset>
     )
   }
   return (
-    <div className={`field${error ? ' has-error' : ''}`}>
+    <div className="field">
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
@@ -119,7 +120,7 @@ export function FrequencySelect({ id, value, onChange, onBlur, describedBy, inva
       onBlur={onBlur}
     >
       <option value="">Vælg frekvens</option>
-      {(Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => (
+      {FREQUENCIES.map((f) => (
         <option key={f} value={f}>
           {FREQUENCY_LABELS[f]}
         </option>
