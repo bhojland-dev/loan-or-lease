@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { FREQUENCIES } from '../core/index.ts'
 import type { Frequency } from '../core/index.ts'
+import { CHOOSE_FREQUENCY, FREQUENCY_LABEL } from './labels.ts'
 
 export interface FieldMessages {
   error?: string
@@ -69,7 +70,17 @@ interface NumberInputProps {
   label?: string
 }
 
-export function NumberInput({ id, value, onChange, onBlur, unit, describedBy, invalid, placeholder, label }: NumberInputProps) {
+export function NumberInput({
+  id,
+  value,
+  onChange,
+  onBlur,
+  unit,
+  describedBy,
+  invalid,
+  placeholder,
+  label,
+}: NumberInputProps) {
   return (
     <div className="input-with-unit">
       <input
@@ -92,13 +103,6 @@ export function NumberInput({ id, value, onChange, onBlur, unit, describedBy, in
   )
 }
 
-const FREQUENCY_LABELS: Record<Frequency, string> = {
-  month: 'pr. måned',
-  quarter: 'pr. kvartal',
-  halfYear: 'pr. halvår',
-  year: 'pr. år',
-}
-
 interface FrequencySelectProps {
   id: string
   value: Frequency | ''
@@ -119,10 +123,10 @@ export function FrequencySelect({ id, value, onChange, onBlur, describedBy, inva
       onChange={(e) => onChange(e.target.value as Frequency | '')}
       onBlur={onBlur}
     >
-      <option value="">Vælg frekvens</option>
+      <option value="">{CHOOSE_FREQUENCY}</option>
       {FREQUENCIES.map((f) => (
         <option key={f} value={f}>
-          {FREQUENCY_LABELS[f]}
+          {FREQUENCY_LABEL[f]}
         </option>
       ))}
     </select>

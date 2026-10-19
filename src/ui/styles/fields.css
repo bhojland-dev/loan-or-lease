@@ -65,7 +65,9 @@ select {
   width: 100%;
   min-width: 0;
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 select {
@@ -88,7 +90,9 @@ input[type='text']:focus-visible,
 select:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-sm);
+  box-shadow:
+    0 0 0 4px var(--accent-soft),
+    var(--shadow-sm);
 }
 
 .button:focus-visible,
@@ -104,7 +108,9 @@ summary:focus-visible {
 
 [aria-invalid='true']:focus-visible {
   border-color: var(--error);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--error) 18%, transparent), var(--shadow-sm);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--error) 18%, transparent),
+    var(--shadow-sm);
 }
 
 .input-with-unit {
@@ -156,7 +162,10 @@ summary:focus-visible {
   border-radius: 8px;
   padding: 0.55rem 1rem;
   cursor: pointer;
-  transition: transform 0.15s var(--ease-out), box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.15s var(--ease-out),
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .button:hover {

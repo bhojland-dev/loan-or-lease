@@ -6,8 +6,13 @@ import { SideHead } from './SideHead.tsx'
 export function LeaseCard() {
   return (
     <section className="card card-side card-lease" aria-labelledby="lease-title">
-      <SideHead id="lease-title" title="Privatleasing" intro="Du lejer bilen og afleverer den, når aftalen slutter." />
-      <SliderControl field="leaseTermMonths" stops={LEASE_TERMS} format={(v) => `${v} mdr.`} tickLabel={(v) => `${v}`} />
+      <SideHead side="lease" />
+      <SliderControl
+        field="leaseTermMonths"
+        stops={LEASE_TERMS}
+        format={(v) => `${v} mdr.`}
+        tickLabel={(v) => `${v}`}
+      />
       <NumberControl field="leaseInitialPayment" />
       <NumberControl field="leaseMonthlyPayment" />
       <NumberControl field="returnCost" />

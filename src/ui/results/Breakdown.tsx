@@ -1,26 +1,30 @@
-import type { BuyBreakdown, ComparisonRow, LeaseBreakdown } from '../../core/index.ts'
+import type { BuyBreakdown, ComparisonRow, LeaseBreakdown, Side } from '../../core/index.ts'
 import { AnimatedNumber } from '../AnimatedNumber.tsx'
+import { NUMBER_FIELD_TEXT, PERIODIC_FIELD_TEXT } from '../fieldText.ts'
 import { formatKr, formatMonths } from '../format.ts'
+import { POST_LABEL, SIDE_LABEL } from '../labels.ts'
 
-const BUY_ROWS: readonly { key: keyof BuyBreakdown; label: string; sign: 1 | -1 }[] = [
-  { key: 'downPayment', label: 'Udbetaling', sign: 1 },
+type Row<T> = { key: keyof T; label: string; sign: 1 | -1 }
+
+const BUY_ROWS: readonly Row<BuyBreakdown>[] = [
+  { key: 'downPayment', label: NUMBER_FIELD_TEXT.downPayment.label, sign: 1 },
   { key: 'loanPayments', label: 'Låneydelser inkl. gebyr', sign: 1 },
   { key: 'remainingDebt', label: 'Restgæld på lånet (indfries ved salg)', sign: 1 },
-  { key: 'insurance', label: 'Forsikring', sign: 1 },
-  { key: 'ownershipTax', label: 'Ejerafgift', sign: 1 },
-  { key: 'service', label: 'Service', sign: 1 },
+  { key: 'insurance', label: PERIODIC_FIELD_TEXT.insurance.label, sign: 1 },
+  { key: 'ownershipTax', label: PERIODIC_FIELD_TEXT.ownershipTax.label, sign: 1 },
+  { key: 'service', label: PERIODIC_FIELD_TEXT.service.label, sign: 1 },
   { key: 'residualValue', label: 'Bilens restværdi (salgsværdi)', sign: -1 },
-  { key: 'interestDeduction', label: 'Rentefradrag', sign: -1 },
-  { key: 'investmentReturn', label: 'Afkast efter skat', sign: -1 },
+  { key: 'interestDeduction', label: POST_LABEL.interestDeduction, sign: -1 },
+  { key: 'investmentReturn', label: POST_LABEL.investmentReturn, sign: -1 },
 ]
 
-const LEASE_ROWS: readonly { key: keyof LeaseBreakdown; label: string; sign: 1 | -1 }[] = [
-  { key: 'initialPayment', label: 'Førstegangsydelse', sign: 1 },
+const LEASE_ROWS: readonly Row<LeaseBreakdown>[] = [
+  { key: 'initialPayment', label: NUMBER_FIELD_TEXT.leaseInitialPayment.label, sign: 1 },
   { key: 'monthlyPayments', label: 'Leasingydelser', sign: 1 },
-  { key: 'insurance', label: 'Forsikring', sign: 1 },
-  { key: 'ownershipTax', label: 'Ejerafgift', sign: 1 },
-  { key: 'returnCost', label: 'Egenbetaling ved aflevering', sign: 1 },
-  { key: 'investmentReturn', label: 'Afkast efter skat', sign: -1 },
+  { key: 'insurance', label: PERIODIC_FIELD_TEXT.insurance.label, sign: 1 },
+  { key: 'ownershipTax', label: PERIODIC_FIELD_TEXT.ownershipTax.label, sign: 1 },
+  { key: 'returnCost', label: NUMBER_FIELD_TEXT.returnCost.label, sign: 1 },
+  { key: 'investmentReturn', label: POST_LABEL.investmentReturn, sign: -1 },
 ]
 
 export function Breakdown({ row }: { row: ComparisonRow }) {
@@ -32,13 +36,11 @@ export function Breakdown({ row }: { row: ComparisonRow }) {
       <p className="section-intro">Skift tidspunkt øverst i resultatet.</p>
       <div className="breakdown-grid">
         <BreakdownTable
-          caption="Køb med billån"
           side="buy"
           rows={BUY_ROWS.map((r) => ({ ...r, value: row.buy[r.key] }))}
           total={row.buy.total}
         />
         <BreakdownTable
-          caption="Privatleasing"
           side="lease"
           rows={LEASE_ROWS.map((r) => ({ ...r, value: row.lease[r.key] }))}
           total={row.lease.total}
@@ -49,19 +51,18 @@ export function Breakdown({ row }: { row: ComparisonRow }) {
 }
 
 interface BreakdownTableProps {
-  caption: string
-  side: 'buy' | 'lease'
+  side: Side
   rows: { key: string; label: string; sign: 1 | -1; value: number }[]
   total: number
 }
 
-function BreakdownTable({ caption, side, rows, total }: BreakdownTableProps) {
+function BreakdownTable({ side, rows, total }: BreakdownTableProps) {
   return (
     <div className={`table-scroll breakdown-${side}`}>
       <table>
         <caption>
           <span className="dot" aria-hidden="true" />
-          {caption}
+          {SIDE_LABEL[side]}
         </caption>
         <thead>
           <tr>

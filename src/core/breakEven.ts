@@ -2,7 +2,12 @@
 
 import type { BreakEvenRow, BuyBreakdown, LeaseBreakdown } from './types.ts'
 
-export function breakEven(months: number, purchasePrice: number, buy: BuyBreakdown, lease: LeaseBreakdown): BreakEvenRow {
+export function breakEven(
+  months: number,
+  purchasePrice: number,
+  buy: BuyBreakdown,
+  lease: LeaseBreakdown,
+): BreakEvenRow {
   // TCO køb uden restværdi − TCO leasing
   const breakEvenResidualValue = buy.total + buy.residualValue - lease.total
   return {

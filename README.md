@@ -28,7 +28,8 @@ npm install
 npm run dev     # udviklingsserver på http://localhost:5173/loan-or-lease/
 npm test        # tests (Vitest)
 npm run lint    # oxlint
+npm run format  # Prettier (format:check bruges i CI)
 npm run build   # typecheck og produktionsbuild til dist/
 ```
 
-Deployes automatisk til GitHub Pages via GitHub Actions ved push til `main`. Workflowet kører testene før build.
+Deployes automatisk til GitHub Pages via GitHub Actions ved push til `main`. Workflowet kører lint, formattjek og tests før build.

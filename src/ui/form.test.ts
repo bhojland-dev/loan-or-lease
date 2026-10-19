@@ -3,6 +3,8 @@ import { validate } from '../core/index.ts'
 import { formatFraction, formatInput, formatKr, formatMonths, parseDanishNumber } from './format.ts'
 import {
   clearFormState,
+  createFormModel,
+  formReducer,
   initialFormState,
   loadFormState,
   saveFormState,
@@ -175,5 +177,50 @@ describe('formularens overgange', () => {
     expect(tidy('3.95')).toBe('3,95')
     expect(tidy('abc')).toBe('abc')
     expect(tidy('')).toBe('')
+  })
+})
+
+describe('formReducer', () => {
+  const start = createFormModel(initialFormState())
+
+  it('skriv ændrer kun felterne, ikke det der regnes på', () => {
+    const next = formReducer(start, { type: 'typeNumber', field: 'purchasePrice', text: '200000' })
+    expect(next.values.numbers.purchasePrice).toBe('200000')
+    expect(next.committed.numbers.purchasePrice).toBe('')
+    expect(next.touched.size).toBe(0)
+  })
+
+  it('commit formaterer, regner med værdien og markerer feltet som forladt', () => {
+    const typed = formReducer(start, { type: 'typeNumber', field: 'purchasePrice', text: '200000' })
+    const next = formReducer(typed, { type: 'commitNumber', field: 'purchasePrice' })
+    expect(next.values.numbers.purchasePrice).toBe('200.000')
+    expect(next.committed).toBe(next.values)
+    expect(next.touched.has('purchasePrice')).toBe(true)
+  })
+
+  it('slidere og valglister regnes med det samme', () => {
+    const km = formReducer(start, { type: 'chooseNumber', field: 'annualKm', value: 25000 })
+    expect(km.committed.numbers.annualKm).toBe('25.000')
+    const freq = formReducer(start, { type: 'chooseFrequency', field: 'service', frequency: 'year' })
+    expect(freq.committed.periodic.service.frequency).toBe('year')
+  })
+
+  it('commit af beløb og afskrivning', () => {
+    let model = formReducer(start, { type: 'typePeriodicAmount', field: 'insurance', text: '8900' })
+    model = formReducer(model, { type: 'commitPeriodicAmount', field: 'insurance' })
+    expect(model.committed.periodic.insurance.amount).toBe('8.900')
+    model = formReducer(model, { type: 'typeDepreciation', year: 0, text: '25' })
+    model = formReducer(model, { type: 'commitDepreciation', year: 0 })
+    expect(model.committed.depreciation[0]).toBe('25')
+    expect(model.touched.has('depreciationPct')).toBe(true)
+  })
+
+  it('vis fejl, regn alt og nulstil', () => {
+    const typed = formReducer(start, { type: 'typeNumber', field: 'downPayment', text: '5' })
+    expect(formReducer(typed, { type: 'commitAll' }).committed.numbers.downPayment).toBe('5')
+    expect([...formReducer(start, { type: 'showProblems', fields: ['purchasePrice'] }).touched]).toEqual([
+      'purchasePrice',
+    ])
+    expect(formReducer(typed, { type: 'reset' }).values).toEqual(initialFormState())
   })
 })

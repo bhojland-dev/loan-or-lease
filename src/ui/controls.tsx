@@ -21,9 +21,9 @@ export function NumberControl({ field, hint, placeholder }: NumberControlProps) 
       {(describedBy) => (
         <NumberInput
           id={field}
-          value={form.form.numbers[field]}
-          onChange={(v) => form.typeNumber(field, v)}
-          onBlur={() => form.commitNumber(field)}
+          value={form.values.numbers[field]}
+          onChange={(typed) => form.dispatch({ type: 'typeNumber', field, text: typed })}
+          onBlur={() => form.dispatch({ type: 'commitNumber', field })}
           unit={text.unit}
           placeholder={placeholder}
           describedBy={describedBy}
@@ -38,7 +38,7 @@ export function PeriodicControl({ field }: { field: PeriodicField }) {
   const form = useForm()
   const text = PERIODIC_FIELD_TEXT[field]
   const msg = form.messages(field, text.hint)
-  const value = form.form.periodic[field]
+  const value = form.values.periodic[field]
   return (
     <Field id={field} label={text.label} {...msg} group>
       {(describedBy) => (
@@ -47,8 +47,8 @@ export function PeriodicControl({ field }: { field: PeriodicField }) {
             id={field}
             label={`${text.label}, beløb`}
             value={value.amount}
-            onChange={(amount) => form.typePeriodicAmount(field, amount)}
-            onBlur={() => form.commitPeriodicAmount(field)}
+            onChange={(typed) => form.dispatch({ type: 'typePeriodicAmount', field, text: typed })}
+            onBlur={() => form.dispatch({ type: 'commitPeriodicAmount', field })}
             unit="kr."
             describedBy={describedBy}
             invalid={!!msg.error}
@@ -56,8 +56,8 @@ export function PeriodicControl({ field }: { field: PeriodicField }) {
           <FrequencySelect
             id={`${field}-frequency`}
             value={value.frequency}
-            onChange={(frequency) => form.chooseFrequency(field, frequency)}
-            onBlur={() => form.touch(field)}
+            onChange={(frequency) => form.dispatch({ type: 'chooseFrequency', field, frequency })}
+            onBlur={() => form.dispatch({ type: 'touch', field })}
             describedBy={describedBy}
             invalid={!!msg.error}
           />
@@ -83,7 +83,7 @@ export function SliderControl({ field, stops, format, tickLabel }: SliderControl
           id={field}
           stops={stops}
           value={form.draft[field]}
-          onChange={(v) => form.chooseNumber(field, v)}
+          onChange={(value) => form.dispatch({ type: 'chooseNumber', field, value })}
           format={format}
           tickLabel={tickLabel}
           describedBy={describedBy}
@@ -100,14 +100,14 @@ export function DepreciationControl() {
     <Field id="depreciationPct" label={DEPRECIATION_LABEL} {...msg} group>
       {(describedBy) => (
         <div className="depreciation">
-          {form.form.depreciation.map((value, year) => (
+          {form.values.depreciation.map((value, year) => (
             <div key={year} className="depreciation-year">
               <label htmlFor={`depreciation-${year}`}>År {year + 1}</label>
               <NumberInput
                 id={`depreciation-${year}`}
                 value={value}
-                onChange={(v) => form.typeDepreciation(year, v)}
-                onBlur={() => form.commitDepreciation(year)}
+                onChange={(text) => form.dispatch({ type: 'typeDepreciation', year, text })}
+                onBlur={() => form.dispatch({ type: 'commitDepreciation', year })}
                 unit="%"
                 describedBy={describedBy}
                 invalid={!!msg.error}

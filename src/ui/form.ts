@@ -1,4 +1,4 @@
-// Formularens tilstand (tekst som brugeren har skrevet), rene overgange mellem tilstande
+// Formularens tilstand (tekst som brugeren har skrevet), en ren reducer for alle ændringer
 // og oversættelse til motorens InputDraft. Ingen React her, så det kan testes direkte.
 
 import { createDefaultDraft, isFrequency, NUMBER_FIELD_NAMES } from '../core/index.ts'
@@ -20,7 +20,10 @@ export const PERIODIC_FIELDS: readonly PeriodicField[] = ['service', 'insurance'
 
 export function initialFormState(): FormState {
   const draft = createDefaultDraft()
-  const numbers = Object.fromEntries(NUMBER_FIELD_NAMES.map((f) => [f, formatInput(draft[f])])) as Record<NumberField, string>
+  const numbers = Object.fromEntries(NUMBER_FIELD_NAMES.map((f) => [f, formatInput(draft[f])])) as Record<
+    NumberField,
+    string
+  >
   const periodic = (field: PeriodicField): PeriodicText => ({
     amount: formatInput(draft[field]?.amount),
     frequency: draft[field]?.frequency ?? '',
@@ -28,7 +31,11 @@ export function initialFormState(): FormState {
   const dep = draft.depreciationPct ?? [undefined, undefined, undefined, undefined]
   return {
     numbers,
-    periodic: { service: periodic('service'), insurance: periodic('insurance'), ownershipTax: periodic('ownershipTax') },
+    periodic: {
+      service: periodic('service'),
+      insurance: periodic('insurance'),
+      ownershipTax: periodic('ownershipTax'),
+    },
     depreciation: [formatInput(dep[0]), formatInput(dep[1]), formatInput(dep[2]), formatInput(dep[3])],
   }
 }
@@ -47,6 +54,75 @@ export function withDepreciation(form: FormState, year: number, text: string): F
   const depreciation = [...form.depreciation] as FormState['depreciation']
   depreciation[year] = text
   return { ...form, depreciation }
+}
+
+// Formularens samlede tilstand og alle ændringer af den, som en ren reducer.
+// `values` er det, der står i felterne. `committed` er det, der regnes på: tekstfelter tæller først med,
+// når man forlader feltet (commit), mens slidere og valglister tæller med det samme.
+
+export interface FormModel {
+  values: FormState
+  committed: FormState
+  /** Felter, brugeren har forladt. Fejl vises først for dem. */
+  touched: ReadonlySet<InputField>
+}
+
+export type FormAction =
+  | { type: 'typeNumber'; field: NumberField; text: string }
+  | { type: 'commitNumber'; field: NumberField }
+  | { type: 'chooseNumber'; field: NumberField; value: number }
+  | { type: 'typePeriodicAmount'; field: PeriodicField; text: string }
+  | { type: 'commitPeriodicAmount'; field: PeriodicField }
+  | { type: 'chooseFrequency'; field: PeriodicField; frequency: Frequency | '' }
+  | { type: 'typeDepreciation'; year: number; text: string }
+  | { type: 'commitDepreciation'; year: number }
+  | { type: 'touch'; field: InputField }
+  | { type: 'commitAll' }
+  | { type: 'showProblems'; fields: readonly InputField[] }
+  | { type: 'reset' }
+
+export function createFormModel(values: FormState): FormModel {
+  return { values, committed: values, touched: new Set() }
+}
+
+export function formReducer(model: FormModel, action: FormAction): FormModel {
+  const { values } = model
+  const type = (next: FormState): FormModel => ({ ...model, values: next })
+  const commit = (next: FormState, touched?: InputField): FormModel => ({
+    values: next,
+    committed: next,
+    touched: touched === undefined || model.touched.has(touched) ? model.touched : new Set(model.touched).add(touched),
+  })
+
+  switch (action.type) {
+    case 'typeNumber':
+      return type(withNumber(values, action.field, action.text))
+    case 'commitNumber':
+      return commit(withNumber(values, action.field, tidy(values.numbers[action.field])), action.field)
+    case 'chooseNumber':
+      return commit(withNumber(values, action.field, formatInput(action.value)))
+    case 'typePeriodicAmount':
+      return type(withPeriodic(values, action.field, { amount: action.text }))
+    case 'commitPeriodicAmount':
+      return commit(
+        withPeriodic(values, action.field, { amount: tidy(values.periodic[action.field].amount) }),
+        action.field,
+      )
+    case 'chooseFrequency':
+      return commit(withPeriodic(values, action.field, { frequency: action.frequency }))
+    case 'typeDepreciation':
+      return type(withDepreciation(values, action.year, action.text))
+    case 'commitDepreciation':
+      return commit(withDepreciation(values, action.year, tidy(values.depreciation[action.year])), 'depreciationPct')
+    case 'touch':
+      return model.touched.has(action.field) ? model : { ...model, touched: new Set(model.touched).add(action.field) }
+    case 'commitAll':
+      return commit(values)
+    case 'showProblems':
+      return { ...model, touched: new Set(action.fields) }
+    case 'reset':
+      return createFormModel(initialFormState())
+  }
 }
 
 /** Dansk formatering af et indtastet tal, fx "200000" → "200.000". Ulæselig tekst bliver stående. */

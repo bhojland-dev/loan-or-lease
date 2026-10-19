@@ -20,7 +20,7 @@ function App() {
           onSubmit={(e) => {
             // Enter i et felt beregner også.
             e.preventDefault()
-            form.commitAll()
+            form.dispatch({ type: 'commitAll' })
           }}
           noValidate
         >

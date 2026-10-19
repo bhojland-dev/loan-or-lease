@@ -1,10 +1,17 @@
 // Lån (SPEC.md 2.1): annuitetslån med ydelser bagud.
 
 import type { AmortizationRow, Inputs, Loan } from './types.ts'
+import { fraction, monthlyRate as toMonthlyRate } from './units.ts'
 
 type LoanInputs = Pick<
   Inputs,
-  'purchasePrice' | 'downPayment' | 'interestRatePct' | 'loanTermMonths' | 'registrationFee' | 'establishmentFee' | 'monthlyLoanFee'
+  | 'purchasePrice'
+  | 'downPayment'
+  | 'interestRatePct'
+  | 'loanTermMonths'
+  | 'registrationFee'
+  | 'establishmentFee'
+  | 'monthlyLoanFee'
 >
 
 /** B1: lånebehov L = I1 − I2. */
@@ -21,7 +28,7 @@ export function calculateLoan(inputs: LoanInputs): Loan {
   // B2: omkostningerne lægges til, men er beregnet af L, ikke af H.
   const principal = loanNeed + inputs.registrationFee + inputs.establishmentFee
   // B3
-  const monthlyRate = inputs.interestRatePct / 100 / 12
+  const monthlyRate = toMonthlyRate(inputs.interestRatePct)
   const termMonths = inputs.loanTermMonths
   // B4
   const installment =
@@ -57,7 +64,7 @@ export function interestInPayment(loan: Loan, payment: number): number {
 export function interestDeduction(loan: Loan, months: number, deductionPct: number): number {
   let interest = 0
   for (let k = 1; k <= paymentsMade(loan, months); k++) interest += interestInPayment(loan, k)
-  return (interest * deductionPct) / 100
+  return interest * fraction(deductionPct)
 }
 
 /** O3: afviklingsprofil, én række pr. måned i hele lånets løbetid. */

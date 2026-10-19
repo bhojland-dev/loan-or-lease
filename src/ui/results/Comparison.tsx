@@ -1,7 +1,7 @@
 import type { Result } from '../../core/index.ts'
 import { AnimatedNumber } from '../AnimatedNumber.tsx'
 import { formatKr, formatMonths } from '../format.ts'
-import { CHEAPEST_LABEL } from './labels.ts'
+import { CHEAPEST_LABEL } from '../labels.ts'
 
 /** O1 */
 export function Comparison({ result }: { result: Result }) {
@@ -14,9 +14,15 @@ export function Comparison({ result }: { result: Result }) {
           <thead>
             <tr>
               <th scope="col">Efter</th>
-              <th scope="col" className="num">TCO køb</th>
-              <th scope="col" className="num">TCO leasing</th>
-              <th scope="col" className="num">Forskel</th>
+              <th scope="col" className="num">
+                TCO køb
+              </th>
+              <th scope="col" className="num">
+                TCO leasing
+              </th>
+              <th scope="col" className="num">
+                Forskel
+              </th>
               <th scope="col">Billigst</th>
             </tr>
           </thead>

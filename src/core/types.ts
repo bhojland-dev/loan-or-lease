@@ -91,9 +91,7 @@ export interface ValidationError {
   code: ValidationCode
 }
 
-export type ValidationResult =
-  | { ok: true; inputs: Inputs }
-  | { ok: false; errors: ValidationError[] }
+export type ValidationResult = { ok: true; inputs: Inputs } | { ok: false; errors: ValidationError[] }
 
 /** B1-B5 og lånets løbetid. Restgæld (B6) og rentefradrag (B7) beregnes i loan.ts. */
 export interface Loan {
@@ -138,7 +136,10 @@ export interface LeaseBreakdown {
   total: number
 }
 
-export type Cheapest = 'buy' | 'lease' | 'equal'
+/** De to scenarier, der sammenlignes. */
+export type Side = 'buy' | 'lease'
+
+export type Cheapest = Side | 'equal'
 
 /** O10: gennemsnitlig fast udgift pr. måned frem til t, uden engangsbeløb (SPEC.md 2.8). */
 export interface MonthlyCosts {

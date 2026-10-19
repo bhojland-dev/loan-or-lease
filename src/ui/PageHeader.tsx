@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from './formContext.ts'
 import { ResetIcon } from './icons.tsx'
+import { comparisonPeriodsText } from './messages.ts'
 
 export function PageHeader() {
   return (
@@ -9,7 +10,7 @@ export function PageHeader() {
         <h1>Lån eller leasing</h1>
         <p>
           Sammenlign de samlede omkostninger (TCO) ved at købe bilen med billån og ved privatleasing af den samme bil
-          efter 1, 2, 3 og 4 år.
+          efter {comparisonPeriodsText()}.
         </p>
       </div>
       <ResetControl />

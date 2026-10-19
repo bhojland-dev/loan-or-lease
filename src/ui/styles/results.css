@@ -192,7 +192,10 @@ td.winner-lease {
   border-radius: 999px;
   padding: 0.35rem 0.8rem;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .segmented button:hover {
@@ -202,7 +205,9 @@ td.winner-lease {
 .segmented button.is-active {
   color: var(--text);
   background: var(--surface);
-  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+  box-shadow:
+    var(--shadow-sm),
+    0 0 0 1px var(--border);
   font-weight: 600;
 }
 
@@ -221,11 +226,15 @@ td.winner-lease {
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   background: var(--accent-soft);
   min-width: 0;
-  transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+  transition:
+    box-shadow 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
 }
 
 .tile.is-winner {
-  box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    var(--shadow-md);
 }
 
 .tile-k {

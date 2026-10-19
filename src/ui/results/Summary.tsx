@@ -1,12 +1,18 @@
-import type { ComparisonRow, Result } from '../../core/index.ts'
+import type { ComparisonRow, Result, Side } from '../../core/index.ts'
 import { AnimatedNumber } from '../AnimatedNumber.tsx'
 import { formatKr, formatMonths } from '../format.ts'
-import { CHEAPEST_LABEL } from './labels.ts'
+import { CHEAPEST_LABEL, SIDE_LABEL } from '../labels.ts'
+
+interface SummaryProps {
+  result: Result
+  row: ComparisonRow
+  onChoose: (months: number) => void
+}
 
 /** O1 for ét valgt tidspunkt: køb og leasing over for hinanden. */
-export function Summary({ result, row, onChoose }: { result: Result; row: ComparisonRow; onChoose: (months: number) => void }) {
+export function Summary({ result, row, onChoose }: SummaryProps) {
+  // Bjælkerne viser TCO i forhold til den største af de to.
   const max = Math.max(row.buy.total, row.lease.total, 1)
-  const bar = (value: number) => `${Math.max(0, (value / max) * 100)}%`
 
   return (
     <section className="card summary" aria-labelledby="summary-title">
@@ -29,23 +35,11 @@ export function Summary({ result, row, onChoose }: { result: Result; row: Compar
       </div>
 
       <div className="duel duel-result">
-        <div className={`tile tile-buy${row.cheapest === 'buy' ? ' is-winner' : ''}`}>
-          <span className="tile-k">
-            <span className="dot" aria-hidden="true" />
-            Køb med billån
-          </span>
-          <span className="tile-v">
-            <AnimatedNumber value={row.buy.total} format={formatKr} />
-          </span>
-          <span className="tile-bar" aria-hidden="true">
-            <span style={{ width: bar(row.buy.total) }} />
-          </span>
-          <span className="tile-s">Samlede omkostninger (TCO)</span>
-        </div>
+        <TotalTile side="buy" total={row.buy.total} max={max} winner={row.cheapest === 'buy'} />
 
         <div className="verdict" role="status">
           {row.cheapest === 'equal' ? (
-            <span className="verdict-text">Lige dyre</span>
+            <span className="verdict-text">{CHEAPEST_LABEL.equal}</span>
           ) : (
             <>
               <span key={row.cheapest} className={`verdict-who verdict-${row.cheapest}`}>
@@ -59,20 +53,33 @@ export function Summary({ result, row, onChoose }: { result: Result; row: Compar
           )}
         </div>
 
-        <div className={`tile tile-lease${row.cheapest === 'lease' ? ' is-winner' : ''}`}>
-          <span className="tile-k">
-            <span className="dot" aria-hidden="true" />
-            Privatleasing
-          </span>
-          <span className="tile-v">
-            <AnimatedNumber value={row.lease.total} format={formatKr} />
-          </span>
-          <span className="tile-bar" aria-hidden="true">
-            <span style={{ width: bar(row.lease.total) }} />
-          </span>
-          <span className="tile-s">Samlede omkostninger (TCO)</span>
-        </div>
+        <TotalTile side="lease" total={row.lease.total} max={max} winner={row.cheapest === 'lease'} />
       </div>
     </section>
+  )
+}
+
+interface TotalTileProps {
+  side: Side
+  total: number
+  max: number
+  winner: boolean
+}
+
+function TotalTile({ side, total, max, winner }: TotalTileProps) {
+  return (
+    <div className={`tile tile-${side}${winner ? ' is-winner' : ''}`}>
+      <span className="tile-k">
+        <span className="dot" aria-hidden="true" />
+        {SIDE_LABEL[side]}
+      </span>
+      <span className="tile-v">
+        <AnimatedNumber value={total} format={formatKr} />
+      </span>
+      <span className="tile-bar" aria-hidden="true">
+        <span style={{ width: `${Math.max(0, (total / max) * 100)}%` }} />
+      </span>
+      <span className="tile-s">Samlede omkostninger (TCO)</span>
+    </div>
   )
 }

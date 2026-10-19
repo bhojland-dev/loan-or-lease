@@ -16,9 +16,15 @@ export function BreakEven({ result }: { result: Result }) {
           <thead>
             <tr>
               <th scope="col">Efter</th>
-              <th scope="col" className="num">Break-even-værditab</th>
-              <th scope="col" className="num">Forventet værditab</th>
-              <th scope="col" className="num">Break-even-restværdi</th>
+              <th scope="col" className="num">
+                Break-even-værditab
+              </th>
+              <th scope="col" className="num">
+                Forventet værditab
+              </th>
+              <th scope="col" className="num">
+                Break-even-restværdi
+              </th>
             </tr>
           </thead>
           <tbody>

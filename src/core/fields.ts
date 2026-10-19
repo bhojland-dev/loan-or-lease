@@ -1,5 +1,6 @@
-// Regler for hvert talfelt (SPEC.md afsnit 1), samlet ét sted. Fejl gives som koder, ikke tekst. Nye talfelter tilføjes her,
-// i InputDraft og Inputs (types.ts) og evt. i DEFAULT_SETTINGS. Valideringen følger med af sig selv.
+// Regler for hvert talfelt (SPEC.md afsnit 1), samlet ét sted. Fejl gives som koder, ikke tekst.
+// Et nyt talfelt tilføjes her, i InputDraft og Inputs (types.ts) og evt. i Settings (defaults.ts).
+// Valideringen følger med af sig selv.
 
 import { KM_STOPS, LEASE_TERMS } from './defaults.ts'
 import type { LeaseTerm, NumberField, ValidationCode } from './types.ts'

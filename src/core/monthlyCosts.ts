@@ -11,7 +11,15 @@ export function buyMonthlyCosts(inputs: Inputs, loan: Loan, months: number): Mon
   const service = runningCost(inputs.service, months) / months
   const beforeTax = payment + insurance + ownershipTax + service
   const deduction = interestDeduction(loan, months, inputs.interestDeductionPct) / months
-  return { payment, insurance, ownershipTax, service, beforeTax, interestDeduction: deduction, afterTax: beforeTax - deduction }
+  return {
+    payment,
+    insurance,
+    ownershipTax,
+    service,
+    beforeTax,
+    interestDeduction: deduction,
+    afterTax: beforeTax - deduction,
+  }
 }
 
 export function leaseMonthlyCosts(inputs: Inputs, months: number): MonthlyCosts {

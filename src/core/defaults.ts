@@ -6,6 +6,10 @@
 
 import type { DepreciationPct, InputDraft, LeaseTerm, PeriodicAmount } from './types.ts'
 
+/**
+ * Felter, der er input (samme navne som i InputDraft), plus satser og grænser, der ikke er input.
+ * Et nyt standardfelt tilføjes her og i DEFAULT_SETTINGS; createDefaultDraft() tager det med af sig selv.
+ */
 export interface Settings {
   /** I5: fast beløb + sats af lånebehovet, hele beløbet oprundet. */
   registrationFee: { fixed: number; rate: number; rounding: number }
@@ -84,17 +88,9 @@ export function defaultEstablishmentFee(loanNeed: number, settings: Settings = D
   return Math.min(max, Math.max(min, rate * loanNeed))
 }
 
-/** Formularens startværdier. I5 og I6 udelades, da de afhænger af lånebehovet. */
+/** Formularens startværdier: alle felter i Settings, der er input. I5 og I6 afhænger af lånebehovet. */
 export function createDefaultDraft(settings: Settings = DEFAULT_SETTINGS): InputDraft {
-  return {
-    monthlyLoanFee: settings.monthlyLoanFee,
-    depreciationPct: settings.depreciationPct,
-    ownershipTax: { ...settings.ownershipTax },
-    annualKm: settings.annualKm,
-    leaseTermMonths: settings.leaseTermMonths,
-    returnCost: settings.returnCost,
-    annualReturnPct: settings.annualReturnPct,
-    returnTaxPct: settings.returnTaxPct,
-    interestDeductionPct: settings.interestDeductionPct,
-  }
+  // Satserne for I5 og I6 og grænsen for O4 er ikke input og skal ikke med.
+  const { registrationFee, establishmentFee, highMileageKmPerYear, ...fieldDefaults } = settings
+  return { ...fieldDefaults, ownershipTax: { ...settings.ownershipTax } }
 }

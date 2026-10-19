@@ -25,7 +25,14 @@ describe('B1-B5 lån', () => {
 
   it('KONTANT_KOEB: L = 0 giver intet lån, og B2-B6 er 0', () => {
     const loan = calculateLoan({ ...KONTANT_KOEB, registrationFee: 3400, establishmentFee: 2000 })
-    expect(loan).toEqual({ loanNeed: 0, principal: 0, monthlyRate: 0, installment: 0, monthlyPayment: 0, termMonths: 0 })
+    expect(loan).toEqual({
+      loanNeed: 0,
+      principal: 0,
+      monthlyRate: 0,
+      installment: 0,
+      monthlyPayment: 0,
+      termMonths: 0,
+    })
     expect(remainingDebt(loan, 12)).toBe(0)
     expect(paymentsMade(loan, 12)).toBe(0)
   })

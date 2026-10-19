@@ -1,0 +1,5 @@
+dist
+node_modules
+package-lock.json
+# Markdown formateres ikke automatisk, så SPEC.md kun ændres bevidst.
+*.md

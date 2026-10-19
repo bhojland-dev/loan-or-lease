@@ -48,9 +48,7 @@
   overflow: hidden;
   border-top: 0;
   padding-top: calc(1.35rem + 4px);
-  background:
-    linear-gradient(180deg, var(--accent-soft), transparent 140px),
-    var(--surface);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 140px), var(--surface);
 }
 
 .card-side::before {

@@ -3,6 +3,7 @@
 import { interestInPayment } from './loan.ts'
 import { runningCostDueInMonth } from './runningCosts.ts'
 import type { Inputs, Loan } from './types.ts'
+import { fraction, monthlyRate as toMonthlyRate } from './units.ts'
 
 export interface MonthlyOutflows {
   buy: number[]
@@ -27,7 +28,9 @@ export function monthlyOutflows(inputs: Inputs, loan: Loan, months: number): Mon
     const shared = runningCostDueInMonth(inputs.insurance, m) + runningCostDueInMonth(inputs.ownershipTax, m)
     buy.push(
       (m === 0 ? inputs.downPayment : 0) +
-        (m < loan.termMonths ? loan.monthlyPayment - (interestInPayment(loan, m + 1) * inputs.interestDeductionPct) / 100 : 0) +
+        (m < loan.termMonths
+          ? loan.monthlyPayment - interestInPayment(loan, m + 1) * fraction(inputs.interestDeductionPct)
+          : 0) +
         runningCostDueInMonth(inputs.service, m) +
         shared,
     )
@@ -40,8 +43,12 @@ export function monthlyOutflows(inputs: Inputs, loan: Loan, months: number): Mon
  * Afkast efter skat for hvert scenarie. Et indskud i måned m forrentes månedligt til tidspunkt t,
  * dvs. i t − m måneder. Gevinsten (saldo − indskud) beskattes samlet med én sats.
  */
-export function investmentReturn(outflows: MonthlyOutflows, annualReturnPct: number, returnTaxPct: number): InvestmentReturn {
-  const monthlyRate = annualReturnPct / 100 / 12
+export function investmentReturn(
+  outflows: MonthlyOutflows,
+  annualReturnPct: number,
+  returnTaxPct: number,
+): InvestmentReturn {
+  const monthlyRate = toMonthlyRate(annualReturnPct)
   const account = { buy: { balance: 0, deposits: 0 }, lease: { balance: 0, deposits: 0 } }
 
   for (let m = 0; m < outflows.buy.length; m++) {
@@ -57,6 +64,6 @@ export function investmentReturn(outflows: MonthlyOutflows, annualReturnPct: num
     account.lease.balance *= 1 + monthlyRate
   }
 
-  const afterTax = (a: { balance: number; deposits: number }) => (a.balance - a.deposits) * (1 - returnTaxPct / 100)
+  const afterTax = (a: { balance: number; deposits: number }) => (a.balance - a.deposits) * (1 - fraction(returnTaxPct))
   return { buy: afterTax(account.buy), lease: afterTax(account.lease) }
 }

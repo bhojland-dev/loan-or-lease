@@ -14,11 +14,21 @@ export function Amortization({ result }: { result: Result }) {
           <thead>
             <tr>
               <th scope="col">Måned</th>
-              <th scope="col" className="num">Ydelse</th>
-              <th scope="col" className="num">Rente</th>
-              <th scope="col" className="num">Afdrag</th>
-              <th scope="col" className="num">Løbende gebyr</th>
-              <th scope="col" className="num">Restgæld</th>
+              <th scope="col" className="num">
+                Ydelse
+              </th>
+              <th scope="col" className="num">
+                Rente
+              </th>
+              <th scope="col" className="num">
+                Afdrag
+              </th>
+              <th scope="col" className="num">
+                Løbende gebyr
+              </th>
+              <th scope="col" className="num">
+                Restgæld
+              </th>
             </tr>
           </thead>
           <tbody>
