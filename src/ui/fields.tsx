@@ -1,6 +1,6 @@
 // Formularfelter med fejl, noter og advarsler ved feltet.
 
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { Frequency } from '../core/index.ts'
 
 export interface FieldMessages {
@@ -128,22 +128,54 @@ export function FrequencySelect({ id, value, onChange, onBlur, describedBy, inva
   )
 }
 
-interface ChoiceSelectProps {
+interface SliderProps {
   id: string
-  value: string
-  options: readonly { value: string; label: string }[]
-  onChange: (value: string) => void
+  /** De tilladte værdier i rækkefølge. Slideren hopper mellem dem. */
+  stops: readonly number[]
+  value: number | undefined
+  onChange: (value: number) => void
+  format: (value: number) => string
+  /** Kort tekst under hvert stop. Udelades, vises kun første og sidste. */
+  tickLabel?: (value: number) => string
   describedBy?: string
 }
 
-export function ChoiceSelect({ id, value, options, onChange, describedBy }: ChoiceSelectProps) {
+export function Slider({ id, stops, value, onChange, format, tickLabel, describedBy }: SliderProps) {
+  const found = value === undefined ? -1 : stops.indexOf(value)
+  const index = found === -1 ? 0 : found
+  const fill = stops.length > 1 ? (index / (stops.length - 1)) * 100 : 0
+  const label = tickLabel ?? format
   return (
-    <select id={id} value={value} aria-describedby={describedBy} onChange={(e) => onChange(e.target.value)}>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <div className="slider">
+      <output className="slider-value" htmlFor={id} aria-hidden="true">
+        {format(stops[index])}
+      </output>
+      <input
+        id={id}
+        type="range"
+        min={0}
+        max={stops.length - 1}
+        step={1}
+        value={index}
+        aria-valuetext={format(stops[index])}
+        aria-describedby={describedBy}
+        style={{ '--fill': `${fill}%` } as CSSProperties}
+        onChange={(e) => onChange(stops[Number(e.target.value)])}
+      />
+      <div className="slider-ticks" aria-hidden="true">
+        {stops.map((stop, i) => (
+          <button
+            key={stop}
+            type="button"
+            tabIndex={-1}
+            className={`slider-tick${i === index ? ' is-active' : ''}`}
+            style={{ left: `${stops.length > 1 ? (i / (stops.length - 1)) * 100 : 0}%` }}
+            onClick={() => onChange(stop)}
+          >
+            {tickLabel || i === 0 || i === stops.length - 1 ? label(stop) : ''}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

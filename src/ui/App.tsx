@@ -13,18 +13,17 @@ import {
   warnings,
 } from '../core/index.ts'
 import type { InputField } from '../core/index.ts'
-import { ChoiceSelect, Field, FrequencySelect, NumberInput } from './fields.tsx'
+import { Field, FrequencySelect, NumberInput, Slider } from './fields.tsx'
 import type { FieldMessages } from './fields.tsx'
 import { formatInput, formatKr, parseDanishNumber } from './format.ts'
 import { initialFormState, toDraft, unreadableFields } from './form.ts'
 import type { FormState, NumberField, PeriodicField } from './form.ts'
 import { Results } from './Results.tsx'
 
-const LEASE_TERM_OPTIONS = LEASE_TERMS.map((t) => ({ value: String(t), label: `${t} mdr.` }))
-const INCLUDED_KM_OPTIONS = Array.from(
+const INCLUDED_KM_STOPS = Array.from(
   { length: (INCLUDED_KM_MAX - INCLUDED_KM_MIN) / INCLUDED_KM_STEP + 1 },
   (_, i) => INCLUDED_KM_MIN + i * INCLUDED_KM_STEP,
-).map((km) => ({ value: formatInput(km), label: `${formatInput(km)} km` }))
+)
 
 const UNREADABLE = 'Skriv et tal, fx 1.234,50.'
 
@@ -206,11 +205,13 @@ function App() {
             <h2 id="lease-title">Privatleasing</h2>
             <Field id="leaseTermMonths" label="Leasingaftalens løbetid">
               {(describedBy) => (
-                <ChoiceSelect
+                <Slider
                   id="leaseTermMonths"
-                  value={form.numbers.leaseTermMonths}
-                  options={LEASE_TERM_OPTIONS}
-                  onChange={(v) => setNumber('leaseTermMonths', v)}
+                  stops={LEASE_TERMS}
+                  value={draft.leaseTermMonths}
+                  onChange={(v) => setNumber('leaseTermMonths', formatInput(v))}
+                  format={(v) => `${v} mdr.`}
+                  tickLabel={(v) => `${v}`}
                   describedBy={describedBy}
                 />
               )}
@@ -219,11 +220,12 @@ function App() {
             {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
             <Field id="includedKmPerYear" label="Inkluderede km pr. år">
               {(describedBy) => (
-                <ChoiceSelect
+                <Slider
                   id="includedKmPerYear"
-                  value={form.numbers.includedKmPerYear}
-                  options={INCLUDED_KM_OPTIONS}
-                  onChange={(v) => setNumber('includedKmPerYear', v)}
+                  stops={INCLUDED_KM_STOPS}
+                  value={draft.includedKmPerYear}
+                  onChange={(v) => setNumber('includedKmPerYear', formatInput(v))}
+                  format={(v) => `${formatInput(v)} km`}
                   describedBy={describedBy}
                 />
               )}
