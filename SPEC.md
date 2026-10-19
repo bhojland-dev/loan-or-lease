@@ -12,9 +12,9 @@ Alle forudfyldte felter kan rettes af brugeren. Felter uden standardværdi skal 
 | --- | --- | --- | --- | --- |
 | I1 | Købspris (kr., faktisk pris efter evt. rabat) | Køb | Ingen | > 0 |
 | I2 | Udbetaling (kr.) | Køb | Ingen | 0 ≤ I2 ≤ I1 |
-| I3 | Debitorrente (% p.a.) | Køb | Ingen | ≥ 0 |
-| I4 | Lånets løbetid (mdr.) | Køb | Ingen | > 0, uafhængig af I13 |
-| I5 | Tinglysningsafgift (kr.) | Køb | 1.850 + 1,5 % af lånebehov, oprundet til nærmeste 100 kr. | ≥ 0 |
+| I3 | Debitorrente (% p.a.) | Køb | Ingen | ≥ 0. Kun påkrævet ved lån (B1 > 0) |
+| I4 | Lånets løbetid (mdr.) | Køb | Ingen | > 0, uafhængig af I13. Kun påkrævet ved lån (B1 > 0) |
+| I5 | Tinglysningsafgift (kr.) | Køb | 1.850 + 1,5 % af lånebehov, hele beløbet oprundet til nærmeste 100 kr. (fx 4.250 → 4.300) | ≥ 0 |
 | I6 | Stiftelsesprovision (kr.) | Køb | 1,25 % af lånebehov, min. 2.000, maks. 10.000 | ≥ 0 |
 | I7 | Løbende lånegebyr (kr./md.) | Køb | 0 | ≥ 0 |
 | I8 | Service (beløb + frekvens) | Køb | Ingen | ≥ 0. Ved leasing altid 0 kr. (inkluderet) |
@@ -48,7 +48,7 @@ Alle beregninger udføres for hvert tidspunkt t = 12, 24, 36, 48 mdr., hvor t �
 | B3 | Månedsrente r | I3 / 12 |
 | B4 | Ydelse A (rente + afdrag) | H × r / (1 − (1 + r)^−I4). Ved r = 0: H / I4 |
 | B5 | Månedlig betaling | A + I7 |
-| B6 | Restgæld efter k ydelser | H × (1 + r)^k − A × ((1 + r)^k − 1) / r. Er k ≥ I4, er restgælden 0 |
+| B6 | Restgæld efter k ydelser | H × (1 + r)^k − A × ((1 + r)^k − 1) / r. Ved r = 0: H − A × k. Er k ≥ I4, er restgælden 0 |
 
 Låneydelser betales bagud. Ved tidspunkt t er min(t, I4) ydelser betalt, og restgælden opgøres efter den sidste. Er lånets løbetid kortere end t, stopper ydelsen. Stiftelsesomkostninger refunderes ikke ved indfrielse.
 
@@ -78,9 +78,9 @@ TCO leasing(t) = I14 + t × I15 + forsikring(t) + ejerafgift(t) + Km(t) + I19 + 
 
 ### 2.6 Afkast (kun ved I20 = til)
 
-For hver måned m = 0 … t − 1 beregnes udgiften i begge scenarier (måned 0 inkl. udbetaling og førstegangsydelse). Det scenarie med den laveste udgift indskyder forskellen på sin konto. Kontoen forrentes månedligt med I21 / 12.
+For hver måned m = 0 … t − 1 beregnes udgiften i begge scenarier (måned 0 inkl. udbetaling og førstegangsydelse). Måned m dækker perioden fra m til m + 1: forudbetalinger falder i starten af måneden, og låneydelse nr. m + 1 (bagud) i slutningen. Alle min(t, I4) ydelser indgår dermed. Det scenarie med den laveste udgift indskyder forskellen på sin konto. Kontoen forrentes månedligt med I21 / 12. Et indskud i måned m forrentes til tidspunkt t, dvs. i t − m måneder.
 
-Ved t: gevinst = saldo − samlede indskud. Afkast = gevinst × (1 − I22). Afkastet trækkes fra det pågældende scenaries TCO. Indfrielse af restgæld ved t indgår ikke i den månedlige udgift.
+Ved t: gevinst = saldo − samlede indskud. Afkast = gevinst × (1 − I22). Afkastet trækkes fra det pågældende scenaries TCO. Indfrielse af restgæld ved t indgår ikke i den månedlige udgift. Det gør engangsbeløbene ved t heller ikke: Km(t), I19 og Exit(t).
 
 ### 2.7 Break-even
 
