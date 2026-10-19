@@ -35,6 +35,22 @@ describe('validering', () => {
     expect(result.inputs.returnCost).toBe(5000)
   })
 
+  it('standard: ejerafgift 460 kr. halvårligt og 15.000 km/år', () => {
+    const draft = createDefaultDraft()
+    expect(draft.ownershipTax).toEqual({ amount: 460, frequency: 'halfYear' })
+    expect(draft.annualKm).toBe(15000)
+  })
+
+  it('I16 følger I12, når brugeren ikke selv har valgt', () => {
+    const result = validate({ ...UDFYLDT, annualKm: 25000, includedKmPerYear: undefined })
+    expect(result.ok && result.inputs.includedKmPerYear).toBe(25000)
+  })
+
+  it('I16 kan sættes til en anden værdi end I12', () => {
+    const result = validate({ ...UDFYLDT, annualKm: 25000, includedKmPerYear: 15000 })
+    expect(result.ok && result.inputs.includedKmPerYear).toBe(15000)
+  })
+
   it('egne værdier for I5 og I6 bruges i stedet for standardværdien', () => {
     const result = validate({ ...UDFYLDT, registrationFee: 0, establishmentFee: 1000 })
     expect(result.ok && [result.inputs.registrationFee, result.inputs.establishmentFee]).toEqual([0, 1000])
@@ -46,8 +62,6 @@ describe('validering', () => {
       'downPayment',
       'service',
       'insurance',
-      'ownershipTax',
-      'annualKm',
       'leaseInitialPayment',
       'leaseMonthlyPayment',
       'excessKmPrice',
@@ -104,6 +118,8 @@ describe('validering', () => {
     ['leaseMonthlyPayment', { leaseMonthlyPayment: 0 }],
     ['includedKmPerYear', { includedKmPerYear: 12500 }],
     ['includedKmPerYear', { includedKmPerYear: 50000 }],
+    ['annualKm', { annualKm: 5000 }],
+    ['annualKm', { annualKm: 17500 }],
     ['returnTaxPct', { returnTaxPct: 101 }],
   ] as const)('%s: ugyldig værdi giver fejl', (field, change) => {
     expect(errorFields({ ...UDFYLDT, ...change })).toEqual([field])

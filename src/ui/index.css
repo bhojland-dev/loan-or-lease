@@ -1003,3 +1003,19 @@ td.winner-lease {
 details[open] > summary {
   margin-bottom: 0.5rem;
 }
+
+.link-button {
+  font: 500 0.82rem var(--body);
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: 0.15rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-button:hover {
+  text-decoration-thickness: 2px;
+}

@@ -3,9 +3,7 @@
 import {
   defaultEstablishmentFee,
   defaultRegistrationFee,
-  INCLUDED_KM_MAX,
-  INCLUDED_KM_MIN,
-  INCLUDED_KM_STEP,
+  KM_STOPS,
   LEASE_TERMS,
 } from './defaults.ts'
 import { calculateLoanNeed } from './loan.ts'
@@ -106,7 +104,9 @@ export function validate(draft: InputDraft): ValidationResult {
   // Begge
   const insurance = periodic('insurance', draft.insurance)
   const ownershipTax = periodic('ownershipTax', draft.ownershipTax)
-  const annualKm = required('annualKm', draft.annualKm, nonNegative, NON_NEGATIVE)
+  const kmInRange = (v: number) => KM_STOPS.includes(v)
+  const KM_MESSAGE = 'Vælg mellem 10.000 og 45.000 km i trin af 5.000.'
+  const annualKm = required('annualKm', draft.annualKm, kmInRange, KM_MESSAGE)
 
   // Leasing
   const leaseTermMonths = required(
@@ -117,12 +117,8 @@ export function validate(draft: InputDraft): ValidationResult {
   ) as LeaseTerm
   const leaseInitialPayment = required('leaseInitialPayment', draft.leaseInitialPayment, nonNegative, NON_NEGATIVE)
   const leaseMonthlyPayment = required('leaseMonthlyPayment', draft.leaseMonthlyPayment, (v) => v > 0, 'Ydelsen skal være større end 0.')
-  const includedKmPerYear = required(
-    'includedKmPerYear',
-    draft.includedKmPerYear,
-    (v) => v >= INCLUDED_KM_MIN && v <= INCLUDED_KM_MAX && v % INCLUDED_KM_STEP === 0,
-    'Vælg mellem 10.000 og 45.000 km i trin af 5.000.',
-  )
+  // I16 følger I12, når brugeren ikke selv har valgt en værdi.
+  const includedKmPerYear = optional('includedKmPerYear', draft.includedKmPerYear, annualKm, kmInRange, KM_MESSAGE)
   const excessKmPrice = required('excessKmPrice', draft.excessKmPrice, nonNegative, NON_NEGATIVE)
   const earlyExitCost = required('earlyExitCost', draft.earlyExitCost, nonNegative, NON_NEGATIVE)
   const returnCost = required('returnCost', draft.returnCost, nonNegative, NON_NEGATIVE)

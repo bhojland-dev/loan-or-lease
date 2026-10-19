@@ -11,7 +11,7 @@ export interface FieldNote {
   text: string
 }
 
-// O5-O7
+// O5-O7 og O9
 export const FIELD_NOTES: readonly FieldNote[] = [
   {
     field: 'depreciationPct',
@@ -20,6 +20,10 @@ export const FIELD_NOTES: readonly FieldNote[] = [
   {
     field: 'earlyExitCost',
     text: "0 kr. forudsætter FDM's standardkontrakt. Tjek egen aftale.",
+  },
+  {
+    field: 'returnCost',
+    text: 'Egenbetalingen kan dækkes af en afleveringsforsikring. Så svarer beløbet til forsikringens selvrisiko, fx 5.000 kr.',
   },
   {
     field: 'returnTaxPct',

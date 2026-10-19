@@ -21,18 +21,30 @@ export const MONTHLY_LOAN_FEE = 0
 // Kilde: Bilbasen/Bilinfo, "Penge ud af vinduet" (ca. 2016).
 export const DEPRECIATION_PCT: DepreciationPct = [20, 14.5, 14.5, 14.5]
 
-// I11 ejerafgift betales halvårligt. Kilde: SPEC.md (2026).
+// I11 ejerafgift: 460 kr. halvårligt, typisk for moderne elbiler (2026). Ingen kilde, valgt af Brian.
+export const OWNERSHIP_TAX_AMOUNT = 460
 export const OWNERSHIP_TAX_FREQUENCY: Frequency = 'halfYear'
+
+// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000, samme trin som I16. Kilde: SPEC.md (2026).
+export const ANNUAL_KM = 15000
 
 // I13 leasingaftalens løbetid. Kilde: SPEC.md (2026).
 export const LEASE_TERM_MONTHS: LeaseTerm = 48
 export const LEASE_TERMS: readonly LeaseTerm[] = [12, 24, 36, 48]
 
-// I16 inkluderede km/år: 10.000-45.000 i trin af 5.000. Kilde: SPEC.md (2026).
-export const INCLUDED_KM_PER_YEAR = 15000
-export const INCLUDED_KM_MIN = 10000
-export const INCLUDED_KM_MAX = 45000
-export const INCLUDED_KM_STEP = 5000
+// I12 og I16: km/år vælges mellem 10.000 og 45.000 i trin af 5.000. Kilde: SPEC.md (2026).
+export const KM_MIN = 10000
+export const KM_MAX = 45000
+export const KM_STEP = 5000
+
+/** De tilladte værdier for I12 og I16. */
+export const KM_STOPS: readonly number[] = Array.from(
+  { length: (KM_MAX - KM_MIN) / KM_STEP + 1 },
+  (_, i) => KM_MIN + i * KM_STEP,
+)
+
+// I16 inkluderede km/år: standard er samme som I12 og følger I12, indtil brugeren selv vælger.
+// Kilde: SPEC.md (2026). Se validate(), hvor en manglende I16 sættes til I12.
 
 // I18 exit-omkostning ved førtidig ophør: 0 kr. forudsætter FDM's standardkontrakt.
 // Kilde: FDM, leasingkontrakt (2026).
@@ -69,14 +81,14 @@ export function defaultEstablishmentFee(loanNeed: number): number {
   return Math.min(ESTABLISHMENT_FEE_MAX, Math.max(ESTABLISHMENT_FEE_MIN, fee))
 }
 
-/** Formularens startværdier. I5 og I6 udelades, da de afhænger af lånebehovet. */
+/** Formularens startværdier. I5, I6 og I16 udelades, da de afhænger af andre felter. */
 export function createDefaultDraft(): InputDraft {
   return {
     monthlyLoanFee: MONTHLY_LOAN_FEE,
     depreciationPct: DEPRECIATION_PCT,
-    ownershipTax: { frequency: OWNERSHIP_TAX_FREQUENCY },
+    ownershipTax: { amount: OWNERSHIP_TAX_AMOUNT, frequency: OWNERSHIP_TAX_FREQUENCY },
+    annualKm: ANNUAL_KM,
     leaseTermMonths: LEASE_TERM_MONTHS,
-    includedKmPerYear: INCLUDED_KM_PER_YEAR,
     earlyExitCost: EARLY_EXIT_COST,
     returnCost: RETURN_COST,
     investDifference: INVEST_DIFFERENCE,

@@ -1,13 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   calculate,
   calculateLoanNeed,
   defaultEstablishmentFee,
   defaultRegistrationFee,
   FIELD_NOTES,
-  INCLUDED_KM_MAX,
-  INCLUDED_KM_MIN,
-  INCLUDED_KM_STEP,
+  KM_STOPS,
   LEASE_TERMS,
   validate,
   warnings,
@@ -16,23 +14,24 @@ import type { InputField } from '../core/index.ts'
 import { Field, FrequencySelect, NumberInput, Slider } from './fields.tsx'
 import type { FieldMessages } from './fields.tsx'
 import { formatInput, formatKr, parseDanishNumber } from './format.ts'
-import { initialFormState, toDraft, unreadableFields } from './form.ts'
+import { initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
 import type { FormState, NumberField, PeriodicField } from './form.ts'
 import { Results } from './Results.tsx'
-
-const INCLUDED_KM_STOPS = Array.from(
-  { length: (INCLUDED_KM_MAX - INCLUDED_KM_MIN) / INCLUDED_KM_STEP + 1 },
-  (_, i) => INCLUDED_KM_MIN + i * INCLUDED_KM_STEP,
-)
 
 const UNREADABLE = 'Skriv et tal, fx 1.234,50.'
 
 function App() {
-  const [form, setForm] = useState<FormState>(initialFormState)
+  // `form` er det, der står i felterne. `calcForm` er det, der regnes på: tekstfelter
+  // tæller først med, når man forlader feltet, mens slidere og valg tæller med det samme.
+  const [form, setForm] = useState<FormState>(() => loadFormState() ?? initialFormState())
+  const [calcForm, setCalcForm] = useState<FormState>(form)
   const [touched, setTouched] = useState<ReadonlySet<InputField>>(new Set())
 
+  useEffect(() => saveFormState(form), [form])
+
   const draft = useMemo(() => toDraft(form), [form])
-  const validation = useMemo(() => validate(draft), [draft])
+  const calcDraft = useMemo(() => toDraft(calcForm), [calcForm])
+  const validation = useMemo(() => validate(calcDraft), [calcDraft])
   const result = useMemo(() => (validation.ok ? calculate(validation.inputs) : null), [validation])
   const unreadable = useMemo(() => unreadableFields(form), [form])
 
@@ -40,12 +39,19 @@ function App() {
   if (!validation.ok) for (const e of validation.errors) if (!errors.has(e.field)) errors.set(e.field, e.message)
 
   const kmWarning =
-    draft.annualKm !== undefined && Number.isFinite(draft.annualKm) ? warnings({ annualKm: draft.annualKm })[0] : undefined
-  const loanNeed =
+    calcDraft.annualKm !== undefined && Number.isFinite(calcDraft.annualKm)
+      ? warnings({ annualKm: calcDraft.annualKm })[0]
+      : undefined
+  const liveLoanNeed =
     draft.purchasePrice !== undefined && draft.downPayment !== undefined
       ? calculateLoanNeed(draft.purchasePrice, draft.downPayment)
       : Number.NaN
-  const hasLoanNeed = Number.isFinite(loanNeed)
+  const hasLoanNeed = Number.isFinite(liveLoanNeed)
+  const loanNeed = liveLoanNeed
+  const calcLoanNeed =
+    calcDraft.purchasePrice !== undefined && calcDraft.downPayment !== undefined
+      ? calculateLoanNeed(calcDraft.purchasePrice, calcDraft.downPayment)
+      : Number.NaN
 
   function messages(field: InputField, hint?: string): FieldMessages {
     const error = unreadable.has(field) ? UNREADABLE : touched.has(field) ? errors.get(field) : undefined
@@ -61,14 +67,24 @@ function App() {
     setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)))
   }
 
-  function setNumber(field: NumberField, value: string) {
-    setForm((prev) => ({ ...prev, numbers: { ...prev.numbers, [field]: value } }))
+  /** Opdaterer felterne og, hvis `commit`, også det der regnes på. */
+  function apply(next: FormState, commit: boolean) {
+    setForm(next)
+    if (commit) setCalcForm(next)
   }
 
-  /** Ved blur skrives tallet pænt med dansk formatering, fx "200000" → "200.000". */
-  function tidyNumber(field: NumberField) {
-    const value = parseDanishNumber(form.numbers[field])
-    if (value !== undefined && Number.isFinite(value)) setNumber(field, formatInput(value))
+  function withNumber(state: FormState, field: NumberField, value: string): FormState {
+    return { ...state, numbers: { ...state.numbers, [field]: value } }
+  }
+
+  /** Dansk formatering af et tal, fx "200000" → "200.000". Ulæselig tekst bliver stående. */
+  function tidy(text: string): string {
+    const value = parseDanishNumber(text)
+    return value !== undefined && Number.isFinite(value) ? formatInput(value) : text
+  }
+
+  function commitNumber(field: NumberField) {
+    apply(withNumber(form, field, tidy(form.numbers[field])), true)
     touch(field)
   }
 
@@ -80,8 +96,8 @@ function App() {
           <NumberInput
             id={field}
             value={form.numbers[field]}
-            onChange={(v) => setNumber(field, v)}
-            onBlur={() => tidyNumber(field)}
+            onChange={(v) => apply(withNumber(form, field, v), false)}
+            onBlur={() => commitNumber(field)}
             unit={unit}
             placeholder={options.placeholder}
             describedBy={describedBy}
@@ -95,8 +111,10 @@ function App() {
   function periodicField(field: PeriodicField, label: string, hint?: string) {
     const msg = messages(field, hint)
     const value = form.periodic[field]
-    const update = (change: Partial<typeof value>) =>
-      setForm((prev) => ({ ...prev, periodic: { ...prev.periodic, [field]: { ...prev.periodic[field], ...change } } }))
+    const withPeriodic = (change: Partial<typeof value>): FormState => ({
+      ...form,
+      periodic: { ...form.periodic, [field]: { ...value, ...change } },
+    })
     return (
       <Field id={field} label={label} {...msg} group>
         {(describedBy) => (
@@ -105,10 +123,9 @@ function App() {
               id={field}
               label={`${label}, beløb`}
               value={value.amount}
-              onChange={(amount) => update({ amount })}
+              onChange={(amount) => apply(withPeriodic({ amount }), false)}
               onBlur={() => {
-                const n = parseDanishNumber(value.amount)
-                if (n !== undefined && Number.isFinite(n)) update({ amount: formatInput(n) })
+                apply(withPeriodic({ amount: tidy(value.amount) }), true)
                 touch(field)
               }}
               unit="kr."
@@ -118,7 +135,7 @@ function App() {
             <FrequencySelect
               id={`${field}-frequency`}
               value={value.frequency}
-              onChange={(frequency) => update({ frequency })}
+              onChange={(frequency) => apply(withPeriodic({ frequency }), true)}
               onBlur={() => touch(field)}
               describedBy={describedBy}
               invalid={!!msg.error}
@@ -130,7 +147,8 @@ function App() {
   }
 
   const depMsg = messages('depreciationPct')
-  const noLoan = hasLoanNeed && loanNeed === 0
+  // Lånefelterne skjules først, når udbetalingen er bekræftet (feltet forladt).
+  const noLoan = calcLoanNeed === 0
   const missingCount = validation.ok ? 0 : new Set(validation.errors.map((e) => e.field)).size
 
   return (
@@ -144,14 +162,33 @@ function App() {
       </header>
 
       <main className="page">
-        <form className="inputs" onSubmit={(e) => e.preventDefault()} noValidate>
+        <form
+          className="inputs"
+          onSubmit={(e) => {
+            // Enter i et felt beregner også.
+            e.preventDefault()
+            apply(form, true)
+          }}
+          noValidate
+        >
           <section className="card card-shared" aria-labelledby="shared-title">
             <h2 id="shared-title">Fælles for begge</h2>
             <p className="section-intro">Udgifter og kørsel, der er de samme, uanset om du køber eller leaser.</p>
             <div className="field-grid">
               {periodicField('insurance', 'Forsikring')}
               {periodicField('ownershipTax', 'Ejerafgift')}
-              {numberField('annualKm', 'Forventet kørsel', 'km/år')}
+              <Field id="annualKm" label="Forventet kørsel pr. år" {...messages('annualKm')}>
+                {(describedBy) => (
+                  <Slider
+                    id="annualKm"
+                    stops={KM_STOPS}
+                    value={draft.annualKm}
+                    onChange={(v) => apply(withNumber(form, 'annualKm', formatInput(v)), true)}
+                    format={(v) => `${formatInput(v)} km`}
+                    describedBy={describedBy}
+                  />
+                )}
+              </Field>
             </div>
           </section>
 
@@ -199,14 +236,17 @@ function App() {
                         <NumberInput
                           id={`depreciation-${i}`}
                           value={value}
-                          onChange={(v) =>
-                            setForm((prev) => {
-                              const next = [...prev.depreciation] as FormState['depreciation']
-                              next[i] = v
-                              return { ...prev, depreciation: next }
-                            })
-                          }
-                          onBlur={() => touch('depreciationPct')}
+                          onChange={(v) => {
+                            const next = [...form.depreciation] as FormState['depreciation']
+                            next[i] = v
+                            apply({ ...form, depreciation: next }, false)
+                          }}
+                          onBlur={() => {
+                            const next = [...form.depreciation] as FormState['depreciation']
+                            next[i] = tidy(next[i])
+                            apply({ ...form, depreciation: next }, true)
+                            touch('depreciationPct')
+                          }}
                           unit="%"
                           describedBy={describedBy}
                           invalid={!!depMsg.error}
@@ -234,7 +274,7 @@ function App() {
                     id="leaseTermMonths"
                     stops={LEASE_TERMS}
                     value={draft.leaseTermMonths}
-                    onChange={(v) => setNumber('leaseTermMonths', formatInput(v))}
+                    onChange={(v) => apply(withNumber(form, 'leaseTermMonths', formatInput(v)), true)}
                     format={(v) => `${v} mdr.`}
                     tickLabel={(v) => `${v}`}
                     describedBy={describedBy}
@@ -243,19 +283,39 @@ function App() {
               </Field>
               {numberField('leaseInitialPayment', 'Førstegangsydelse', 'kr.')}
               {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
-              <Field id="includedKmPerYear" label="Inkluderede km pr. år">
-                {(describedBy) => (
+              <Field
+              id="includedKmPerYear"
+              label="Inkluderede km pr. år"
+              {...messages(
+                'includedKmPerYear',
+                form.includedKmLinked ? 'Følger forventet kørsel, indtil du selv vælger.' : undefined,
+              )}
+            >
+              {(describedBy) => (
+                <>
                   <Slider
                     id="includedKmPerYear"
-                    stops={INCLUDED_KM_STOPS}
-                    value={draft.includedKmPerYear}
-                    onChange={(v) => setNumber('includedKmPerYear', formatInput(v))}
+                    stops={KM_STOPS}
+                    value={form.includedKmLinked ? draft.annualKm : draft.includedKmPerYear}
+                    onChange={(v) =>
+                      apply({ ...withNumber(form, 'includedKmPerYear', formatInput(v)), includedKmLinked: false }, true)
+                    }
                     format={(v) => `${formatInput(v)} km`}
                     describedBy={describedBy}
                   />
-                )}
-              </Field>
-              {numberField('excessKmPrice', 'Pris pr. overkørt km', 'kr.')}
+                  {!form.includedKmLinked && (
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => apply({ ...form, includedKmLinked: true }, true)}
+                    >
+                      Brug forventet kørsel ({formatInput(draft.annualKm ?? 0)} km)
+                    </button>
+                  )}
+                </>
+              )}
+            </Field>
+            {numberField('excessKmPrice', 'Pris pr. overkørt km', 'kr.')}
               {numberField('earlyExitCost', 'Exit-omkostning ved førtidig ophør', 'kr.')}
               {numberField('returnCost', 'Egenbetaling ved aflevering', 'kr.')}
             </section>
@@ -278,7 +338,7 @@ function App() {
                       type="radio"
                       name="investDifference"
                       checked={form.investDifference === o.value}
-                      onChange={() => setForm((prev) => ({ ...prev, investDifference: o.value }))}
+                      onChange={() => apply({ ...form, investDifference: o.value }, true)}
                       aria-describedby="investDifference-hint"
                     />
                     {o.label}

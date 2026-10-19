@@ -43,7 +43,7 @@ describe('samlet beregning', () => {
 
   it('O4: advarsel ved over 20.000 km/år', () => {
     expect(calculate(RENTEFRIT_LAAN).warnings).toEqual([])
-    expect(calculate({ ...RENTEFRIT_LAAN, annualKm: 20001 }).warnings).toEqual([
+    expect(calculate({ ...RENTEFRIT_LAAN, annualKm: 25000 }).warnings).toEqual([
       expect.objectContaining({ code: 'highMileage', field: 'annualKm' }),
     ])
   })

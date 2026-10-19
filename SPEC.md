@@ -20,12 +20,12 @@ Alle forudfyldte felter kan rettes af brugeren. Felter uden standardværdi skal 
 | I8 | Service (beløb + frekvens) | Køb | Ingen | ≥ 0. Ved leasing altid 0 kr. (inkluderet) |
 | I9 | Afskrivning år 1 / 2 / 3 / 4 (%) | Køb | 20 / 14,5 / 14,5 / 14,5 | 0-100 |
 | I10 | Forsikring (beløb + frekvens) | Begge | Ingen | ≥ 0. Ét fælles felt |
-| I11 | Ejerafgift (beløb + frekvens) | Begge | Frekvens: halvår | ≥ 0. Ét fælles felt |
-| I12 | Forventet kørsel (km/år) | Begge | Ingen | ≥ 0 |
+| I11 | Ejerafgift (beløb + frekvens) | Begge | 460 kr. halvårligt (typisk for moderne elbiler) | ≥ 0. Ét fælles felt |
+| I12 | Forventet kørsel (km/år) | Begge | 15.000 | 10.000-45.000 i trin af 5.000 |
 | I13 | Leasingaftalens løbetid (mdr.) | Leasing | 48 | 12, 24, 36 eller 48 |
 | I14 | Førstegangsydelse (kr.) | Leasing | Ingen | ≥ 0 |
 | I15 | Månedlig leasingydelse (kr.) | Leasing | Ingen | > 0 |
-| I16 | Inkluderede km/år | Leasing | 15.000 | 10.000-45.000 i trin af 5.000 |
+| I16 | Inkluderede km/år | Leasing | Samme som I12. Følger I12, indtil brugeren selv vælger en anden værdi | 10.000-45.000 i trin af 5.000 |
 | I17 | Pris pr. overkørt km (kr.) | Leasing | Ingen | ≥ 0 |
 | I18 | Exit-omkostning ved førtidig ophør (kr.) | Leasing | 0 | ≥ 0 |
 | I19 | Egenbetaling ved aflevering (kr.) | Leasing | 5.000 | ≥ 0 |
@@ -104,6 +104,7 @@ Er det forventede værditab mindre end break-even, er køb billigst.
 | O6 | Note ved I18 | 0 kr. forudsætter FDM's standardkontrakt. Tjek egen aftale |
 | O7 | Note ved I22 | Skat beregnes samlet af gevinsten. Der tages ikke højde for grænsen på 55.000 kr. eller skat år for år |
 | O8 | Validering | Udbetaling > købspris giver fejl. Beregning gennemføres ikke, før alle påkrævede felter er udfyldt |
+| O9 | Note ved I19 | Egenbetalingen kan dækkes af en afleveringsforsikring. Så svarer beløbet til forsikringens selvrisiko, fx 5.000 kr. |
 
 ## 4. Forenklinger, åbne punkter og kilder
 

@@ -20,6 +20,8 @@ export interface FormState {
   periodic: Record<PeriodicField, PeriodicText>
   depreciation: [string, string, string, string]
   investDifference: boolean
+  /** I16 følger I12, indtil brugeren selv vælger en værdi for I16. */
+  includedKmLinked: boolean
 }
 
 const NUMBER_FIELDS: readonly NumberField[] = [
@@ -55,12 +57,15 @@ export function initialFormState(): FormState {
     periodic: { service: periodic('service'), insurance: periodic('insurance'), ownershipTax: periodic('ownershipTax') },
     depreciation: [formatInput(dep[0]), formatInput(dep[1]), formatInput(dep[2]), formatInput(dep[3])],
     investDifference: draft.investDifference ?? true,
+    includedKmLinked: true,
   }
 }
 
 export function toDraft(form: FormState): InputDraft {
   const draft: InputDraft = {}
   for (const field of NUMBER_FIELDS) draft[field] = parseDanishNumber(form.numbers[field])
+  // Udeladt I16 betyder "samme som I12" i core.
+  if (form.includedKmLinked) draft.includedKmPerYear = undefined
   for (const field of ['service', 'insurance', 'ownershipTax'] as const) {
     const { amount, frequency } = form.periodic[field]
     draft[field] = { amount: parseDanishNumber(amount), frequency: frequency === '' ? undefined : frequency }
@@ -79,4 +84,60 @@ export function unreadableFields(form: FormState): Set<InputField> {
   for (const field of ['service', 'insurance', 'ownershipTax'] as const) if (bad(form.periodic[field].amount)) fields.add(field)
   if (form.depreciation.some(bad)) fields.add('depreciationPct')
   return fields
+}
+
+// Felterne gemmes i browseren, så de ikke tømmes ved genindlæsning. Kun en bekvemmelighed:
+// mangler eller fejler lageret, starter formularen bare med standardværdierne.
+
+const STORAGE_KEY = 'loan-or-lease:form:v1'
+
+export function saveFormState(form: FormState): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
+  } catch {
+    // Lageret er ikke tilgængeligt (fx privat vindue). Ignoreres.
+  }
+}
+
+/** Gemt formular lagt oven på standardværdierne, så nye felter i senere versioner får en værdi. */
+export function loadFormState(): FormState | null {
+  let stored: unknown
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw === null) return null
+    stored = JSON.parse(raw)
+  } catch {
+    return null
+  }
+  if (typeof stored !== 'object' || stored === null) return null
+  const saved = stored as Partial<FormState>
+  const base = initialFormState()
+  const text = (v: unknown, fallback: string) => (typeof v === 'string' ? v : fallback)
+
+  const numbers = { ...base.numbers }
+  for (const field of NUMBER_FIELDS) numbers[field] = text(saved.numbers?.[field], base.numbers[field])
+
+  const periodic = { ...base.periodic }
+  for (const field of ['service', 'insurance', 'ownershipTax'] as const) {
+    const s = saved.periodic?.[field]
+    const frequency = s?.frequency
+    periodic[field] = {
+      amount: text(s?.amount, base.periodic[field].amount),
+      frequency:
+        frequency === '' || frequency === 'month' || frequency === 'quarter' || frequency === 'halfYear' || frequency === 'year'
+          ? frequency
+          : base.periodic[field].frequency,
+    }
+  }
+
+  const dep = Array.isArray(saved.depreciation) ? saved.depreciation : []
+  const depreciation = base.depreciation.map((d, i) => text(dep[i], d)) as FormState['depreciation']
+
+  return {
+    numbers,
+    periodic,
+    depreciation,
+    investDifference: typeof saved.investDifference === 'boolean' ? saved.investDifference : base.investDifference,
+    includedKmLinked: typeof saved.includedKmLinked === 'boolean' ? saved.includedKmLinked : base.includedKmLinked,
+  }
 }

@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { validate } from '../core/index.ts'
 import { formatFraction, formatInput, formatKr, formatMonths, parseDanishNumber } from './format.ts'
-import { initialFormState, toDraft, unreadableFields } from './form.ts'
+import { initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
 
 describe('dansk formatering', () => {
   it('beløb i kr.', () => {
@@ -53,7 +53,18 @@ describe('formular', () => {
     expect(form.numbers.leaseTermMonths).toBe('48')
     expect(form.numbers.annualReturnPct).toBe('0,25')
     expect(form.numbers.registrationFee).toBe('')
-    expect(form.periodic.ownershipTax.frequency).toBe('halfYear')
+    expect(form.periodic.ownershipTax).toEqual({ amount: '460', frequency: 'halfYear' })
+    expect(form.numbers.annualKm).toBe('15.000')
+    expect(form.includedKmLinked).toBe(true)
+  })
+
+  it('inkluderede km følger forventet kørsel, indtil brugeren selv vælger', () => {
+    const form = initialFormState()
+    form.numbers.annualKm = '25.000'
+    form.numbers.includedKmPerYear = '10.000'
+    expect(toDraft(form).includedKmPerYear).toBeUndefined()
+    form.includedKmLinked = false
+    expect(toDraft(form).includedKmPerYear).toBe(10000)
   })
 
   it('et udfyldt skema giver gyldigt input', () => {
@@ -81,5 +92,51 @@ describe('formular', () => {
     form.numbers.purchasePrice = 'abc'
     form.depreciation[2] = 'x'
     expect([...unreadableFields(form)]).toEqual(['purchasePrice', 'depreciationPct'])
+  })
+})
+
+describe('gemte felter', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function stubStorage(initial: Record<string, string> = {}) {
+    const data = { ...initial }
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => data[k] ?? null,
+      setItem: (k: string, v: string) => {
+        data[k] = v
+      },
+    })
+    return data
+  }
+
+  it('gemmer og indlæser formularen', () => {
+    stubStorage()
+    const form = initialFormState()
+    form.numbers.purchasePrice = '200.000'
+    form.periodic.insurance = { amount: '8.900', frequency: 'year' }
+    form.includedKmLinked = false
+    saveFormState(form)
+    expect(loadFormState()).toEqual(form)
+  })
+
+  it('intet gemt eller ødelagt indhold giver null', () => {
+    stubStorage()
+    expect(loadFormState()).toBeNull()
+    stubStorage({ 'loan-or-lease:form:v1': '{ikke json' })
+    expect(loadFormState()).toBeNull()
+  })
+
+  it('manglende felter i det gemte får standardværdien', () => {
+    stubStorage({ 'loan-or-lease:form:v1': JSON.stringify({ numbers: { purchasePrice: '150.000' } }) })
+    const loaded = loadFormState()
+    expect(loaded?.numbers.purchasePrice).toBe('150.000')
+    expect(loaded?.periodic.ownershipTax).toEqual({ amount: '460', frequency: 'halfYear' })
+    expect(loaded?.includedKmLinked).toBe(true)
+  })
+
+  it('uden lager (fx privat vindue) sker der ingen fejl', () => {
+    vi.stubGlobal('localStorage', undefined)
+    expect(() => saveFormState(initialFormState())).not.toThrow()
+    expect(loadFormState()).toBeNull()
   })
 })
