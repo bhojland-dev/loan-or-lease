@@ -7,10 +7,14 @@ type LoanInputs = Pick<
   'purchasePrice' | 'downPayment' | 'interestRatePct' | 'loanTermMonths' | 'registrationFee' | 'establishmentFee' | 'monthlyLoanFee'
 >
 
+/** B1: lånebehov L = I1 − I2. */
+export function calculateLoanNeed(purchasePrice: number, downPayment: number): number {
+  return Math.max(0, purchasePrice - downPayment)
+}
+
 export function calculateLoan(inputs: LoanInputs): Loan {
-  // B1
-  const loanNeed = inputs.purchasePrice - inputs.downPayment
-  if (loanNeed <= 0) {
+  const loanNeed = calculateLoanNeed(inputs.purchasePrice, inputs.downPayment)
+  if (loanNeed === 0) {
     return { loanNeed: 0, principal: 0, monthlyRate: 0, installment: 0, monthlyPayment: 0, termMonths: 0 }
   }
 

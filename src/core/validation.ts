@@ -8,6 +8,7 @@ import {
   INCLUDED_KM_STEP,
   LEASE_TERMS,
 } from './defaults.ts'
+import { calculateLoanNeed } from './loan.ts'
 import type {
   DepreciationPct,
   Frequency,
@@ -71,7 +72,7 @@ export function validate(draft: InputDraft): ValidationResult {
   }
 
   // I3 og I4 er kun påkrævede, når der er et lån (L > 0).
-  const loanNeed = Math.max(0, purchasePrice - downPayment)
+  const loanNeed = calculateLoanNeed(purchasePrice, downPayment)
   const hasLoan = loanNeed > 0
   let interestRatePct = 0
   let loanTermMonths = 0
