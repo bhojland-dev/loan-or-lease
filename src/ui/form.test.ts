@@ -1,7 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { validate } from '../core/index.ts'
 import { formatFraction, formatInput, formatKr, formatMonths, parseDanishNumber } from './format.ts'
-import { clearFormState, initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
+import {
+  clearFormState,
+  initialFormState,
+  loadFormState,
+  saveFormState,
+  tidy,
+  toDraft,
+  unreadableFields,
+  withDepreciation,
+  withNumber,
+  withPeriodic,
+} from './form.ts'
 
 describe('dansk formatering', () => {
   it('beløb i kr.', () => {
@@ -141,5 +152,28 @@ describe('gemte felter', () => {
     vi.stubGlobal('localStorage', undefined)
     expect(() => saveFormState(initialFormState())).not.toThrow()
     expect(loadFormState()).toBeNull()
+  })
+})
+
+describe('formularens overgange', () => {
+  it('ændrer kun det ene felt og lader den gamle tilstand være', () => {
+    const before = initialFormState()
+    const after = withNumber(before, 'purchasePrice', '200.000')
+    expect(after.numbers.purchasePrice).toBe('200.000')
+    expect(before.numbers.purchasePrice).toBe('')
+    expect(after.periodic).toBe(before.periodic)
+  })
+
+  it('beløb, frekvens og afskrivning', () => {
+    const form = withDepreciation(withPeriodic(initialFormState(), 'service', { frequency: 'year' }), 2, '10')
+    expect(form.periodic.service).toEqual({ amount: '', frequency: 'year' })
+    expect(form.depreciation).toEqual(['20', '14,5', '10', '14,5'])
+  })
+
+  it('tidy formaterer læsbare tal og lader ulæselig tekst stå', () => {
+    expect(tidy('200000')).toBe('200.000')
+    expect(tidy('3.95')).toBe('3,95')
+    expect(tidy('abc')).toBe('abc')
+    expect(tidy('')).toBe('')
   })
 })

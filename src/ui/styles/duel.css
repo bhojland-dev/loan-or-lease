@@ -1,0 +1,148 @@
+/* Køb over for leasing */
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+/* Hver side bruger sin egen farve til slidere, fokus og prikker. */
+.card-buy,
+.tile-buy,
+.breakdown-buy {
+  --accent: var(--buy);
+  --accent-soft: var(--buy-soft);
+}
+
+.card-lease,
+.tile-lease,
+.breakdown-lease {
+  --accent: var(--lease);
+  --accent-soft: var(--lease-soft);
+}
+
+.duel {
+  display: grid;
+  gap: 1.25rem;
+  position: relative;
+}
+
+@media (min-width: 860px) {
+  .duel {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .duel-result {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.card-side {
+  position: relative;
+  overflow: hidden;
+  border-top: 0;
+  padding-top: calc(1.35rem + 4px);
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 140px),
+    var(--surface);
+}
+
+.card-side::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--accent);
+}
+
+.card-lease {
+  animation-delay: 80ms;
+}
+
+.side-head {
+  margin-bottom: 1rem;
+}
+
+.side-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  color: var(--accent);
+}
+
+.side-head h2 .dot {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.side-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* Markering mellem køb og leasing. Ren dekoration: ingen ramme, skygge eller hover, så den ikke ligner en knap.
+   På brede skærme står pilene øverst i en smal midterkolonne med en tynd linje under; på smalle mellem kortene. */
+.vs {
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.compare-icon {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  transform: rotate(90deg);
+  animation: fade-in 0.6s var(--ease-out) 0.3s both;
+}
+
+.compare-icon-buy,
+.compare-icon-lease {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.compare-icon-buy {
+  stroke: var(--buy);
+}
+
+.compare-icon-lease {
+  stroke: var(--lease);
+}
+
+@media (min-width: 860px) {
+  .duel > .vs {
+    align-self: stretch;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 1.5rem;
+  }
+
+  .duel > .vs::after {
+    content: '';
+    flex: 1;
+    width: 2px;
+    margin-top: 0.75rem;
+    border-radius: 1px;
+    background: linear-gradient(180deg, var(--buy), var(--lease) 60%, transparent);
+    opacity: 0.35;
+  }
+
+  .compare-icon {
+    transform: none;
+  }
+}

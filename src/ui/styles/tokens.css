@@ -1,0 +1,60 @@
+/* Farver, skygger og fonte. Farver og fonte følger savings-calculator: blågrøn = køb, rav = leasing. */
+
+:root {
+  /* Farver og fonte fra savings-calculator: blågrøn (A) = køb, rav (B) = leasing. */
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --text: #16202b;
+  --muted: #5b6876;
+  --border: #d9dfe6;
+  --accent: #0f7a6c;
+  --accent-soft: rgba(15, 122, 108, 0.12);
+  --error: #b42318;
+  --warning-bg: rgba(184, 101, 10, 0.12);
+  --warning-text: #8a4b06;
+  --buy: #0f7a6c;
+  --buy-soft: rgba(15, 122, 108, 0.12);
+  --lease: #b8650a;
+  --lease-soft: rgba(184, 101, 10, 0.12);
+  --glow: rgba(15, 122, 108, 0.07);
+  --shadow-sm: 0 1px 2px rgb(22 32 43 / 0.06);
+  --shadow-md: 0 1px 2px rgb(22 32 43 / 0.04), 0 4px 12px rgb(22 32 43 / 0.06), 0 12px 32px rgb(22 32 43 / 0.05);
+  --shadow-lg: 0 2px 4px rgb(22 32 43 / 0.05), 0 8px 20px rgb(22 32 43 / 0.08), 0 20px 48px rgb(22 32 43 / 0.08);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235b6876' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  interpolate-size: allow-keywords;
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f151b;
+    --surface: #17202a;
+    --text: #e8edf2;
+    --muted: #93a1af;
+    --border: #2a3643;
+    --accent: #3cc3ae;
+    --accent-soft: rgba(60, 195, 174, 0.14);
+    --error: #ff8a80;
+    --warning-bg: rgba(240, 162, 74, 0.14);
+    --warning-text: #f0a24a;
+    --buy: #3cc3ae;
+    --buy-soft: rgba(60, 195, 174, 0.14);
+    --lease: #f0a24a;
+    --lease-soft: rgba(240, 162, 74, 0.14);
+    --glow: rgba(60, 195, 174, 0.08);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 16px rgb(0 0 0 / 0.28), 0 16px 40px rgb(0 0 0 / 0.22);
+    --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 10px 24px rgb(0 0 0 / 0.35), 0 24px 56px rgb(0 0 0 / 0.3);
+    --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2393a1af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    color-scheme: dark;
+  }
+}

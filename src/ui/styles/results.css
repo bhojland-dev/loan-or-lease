@@ -1,0 +1,379 @@
+/* Resultater */
+
+.status p {
+  color: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-tall {
+  max-height: 28rem;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.75rem 0 0.25rem;
+}
+
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+thead th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+tbody th,
+tfoot th {
+  font-weight: 500;
+}
+
+td {
+  font-family: var(--mono);
+}
+
+caption {
+  font-family: var(--display);
+}
+
+tfoot th,
+tfoot td {
+  font-weight: 700;
+  border-bottom: 0;
+}
+
+.num {
+  text-align: right;
+}
+
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
+}
+
+td.winner {
+  font-weight: 700;
+}
+
+.badge {
+  animation: pop 0.35s var(--ease-out);
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.badge-buy {
+  color: var(--buy);
+  background: var(--buy-soft);
+}
+
+.badge-lease {
+  color: var(--lease);
+  background: var(--lease-soft);
+}
+
+.badge-equal {
+  color: var(--muted);
+  background: var(--bg);
+}
+
+details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 0.35s var(--ease-out),
+    content-visibility 0.35s allow-discrete;
+}
+
+details[open]::details-content {
+  block-size: auto;
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: '▸';
+  color: var(--muted);
+  transition: transform 0.25s var(--ease-out);
+}
+
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details > summary h2 {
+  margin: 0;
+}
+
+.info {
+  animation: message-in 0.25s var(--ease-out);
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: 0.88rem;
+}
+
+td.winner-buy {
+  color: var(--buy);
+}
+
+td.winner-lease {
+  color: var(--lease);
+}
+
+/* Resultat: to fliser og en dom imellem */
+
+.summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.summary-head h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.segmented button {
+  font: 500 0.82rem var(--body);
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button.is-active {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+  font-weight: 600;
+}
+
+.segmented button:focus-visible {
+  outline: 2px solid var(--buy);
+  outline-offset: 1px;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-soft);
+  min-width: 0;
+  transition: box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+}
+
+.tile.is-winner {
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
+}
+
+.tile-k {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.tile-v {
+  font: 700 clamp(1.4rem, 3.4vw, 1.9rem) var(--display);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.tile-bar {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  overflow: hidden;
+}
+
+.tile-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.45s var(--ease-out);
+}
+
+.tile-s {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.verdict {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+  min-width: 11rem;
+}
+
+.verdict-who {
+  font: 700 0.95rem var(--display);
+  animation: pop 0.35s var(--ease-out);
+}
+
+.verdict-buy {
+  color: color-mix(in srgb, var(--buy) 55%, var(--bg));
+}
+
+.verdict-lease {
+  color: color-mix(in srgb, var(--lease) 55%, var(--bg));
+}
+
+.verdict-amount {
+  font: 700 1.25rem var(--display);
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-text {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--bg) 70%, var(--text));
+}
+
+/* Opdelingen af TCO side om side */
+
+.breakdown-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 860px) {
+  .breakdown-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.breakdown-grid caption {
+  color: var(--accent);
+}
+
+.breakdown-grid caption .dot {
+  margin-right: 0.45rem;
+  vertical-align: 0.05em;
+}
+
+details[open] > summary {
+  margin-bottom: 0.5rem;
+}
+
+/* Månedlige faste udgifter */
+
+.monthly-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 860px) {
+  .monthly-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.monthly-buy {
+  --accent: var(--buy);
+  --accent-soft: var(--buy-soft);
+}
+
+.monthly-lease {
+  --accent: var(--lease);
+  --accent-soft: var(--lease-soft);
+}
+
+.monthly-grid caption {
+  color: var(--accent);
+}
+
+.monthly-grid caption .dot {
+  margin-right: 0.45rem;
+  vertical-align: 0.05em;
+}
+
+.monthly-grid tr.subtotal th,
+.monthly-grid tr.subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+}
+
+.monthly-grid tfoot td {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+  font-family: var(--body);
+}

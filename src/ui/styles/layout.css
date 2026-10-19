@@ -1,0 +1,126 @@
+/* Sidehoved, sidens opbygning, kort og knapper i sidehovedet. */
+
+.page-header {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 1.5rem;
+  animation: rise-in 0.6s var(--ease-out) both;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reset-question {
+  font-size: 0.88rem;
+  font-weight: 600;
+  animation: message-in 0.2s var(--ease-out);
+}
+
+.button.button-quiet {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.button.button-quiet:hover {
+  color: var(--text);
+}
+
+.button.button-danger {
+  color: var(--surface);
+  background: var(--error);
+  animation: message-in 0.2s var(--ease-out);
+}
+
+.button-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.page-header p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.inputs,
+.results {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 16px;
+  padding: 1.35rem;
+  min-width: 0;
+  box-shadow: var(--shadow-md);
+  transition: box-shadow 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+  animation: rise-in 0.5s var(--ease-out) both;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.inputs > .card:nth-child(2),
+.results > .card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.inputs > .card:nth-child(3),
+.results > .card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.inputs > .card:nth-child(4),
+.results > .card:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.section-intro {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 1.25rem;
+}
+
+.field-grid > .field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 559px) {
+  .field-grid {
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,86 @@
+/* Grundlæggende elementer, animationer og hjælpeklasser. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 500px at 15% -10%, var(--glow), transparent 70%),
+    radial-gradient(900px 400px at 100% 0%, var(--glow), transparent 70%),
+    var(--bg);
+}
+
+h1,
+h2 {
+  font-family: var(--display);
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+}
+
+h1 {
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4.5vw, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h2 {
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::details-content {
+    animation: none !important;
+    transition: none !important;
+  }
+}

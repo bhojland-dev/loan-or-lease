@@ -1,364 +1,42 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  calculate,
-  calculateLoanNeed,
-  defaultEstablishmentFee,
-  defaultRegistrationFee,
-  FIELD_NOTES,
-  KM_STOPS,
-  LEASE_TERMS,
-  validate,
-  warnings,
-} from '../core/index.ts'
-import type { InputDraft, InputField } from '../core/index.ts'
-import { Field, FrequencySelect, NumberInput, Slider } from './fields.tsx'
-import type { FieldMessages } from './fields.tsx'
-import { CompareIcon, ResetIcon } from './icons.tsx'
-import { formatInput, formatKr, parseDanishNumber } from './format.ts'
-import { clearFormState, initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
-import type { FormState, NumberField, PeriodicField } from './form.ts'
-import { Results } from './Results.tsx'
-
-const UNREADABLE = 'Skriv et tal, fx 1.234,50.'
-
-/** Lånebehovet (B1), når både købspris og udbetaling er udfyldt med tal. */
-function loanNeedOf(draft: InputDraft): number | undefined {
-  const { purchasePrice, downPayment } = draft
-  if (purchasePrice === undefined || downPayment === undefined) return undefined
-  const need = calculateLoanNeed(purchasePrice, downPayment)
-  return Number.isFinite(need) ? need : undefined
-}
+import { BuyCard } from './cards/BuyCard.tsx'
+import { LeaseCard } from './cards/LeaseCard.tsx'
+import { ReturnCard } from './cards/ReturnCard.tsx'
+import { SharedCard } from './cards/SharedCard.tsx'
+import { StatusCard } from './cards/StatusCard.tsx'
+import { FormContext } from './formContext.ts'
+import { CompareIcon } from './icons.tsx'
+import { PageHeader } from './PageHeader.tsx'
+import { Results } from './results/Results.tsx'
+import { useFormState } from './useFormState.ts'
 
 function App() {
-  // `form` er det, der står i felterne. `calcForm` er det, der regnes på: tekstfelter
-  // tæller først med, når man forlader feltet, mens slidere og valg tæller med det samme.
-  const [form, setForm] = useState<FormState>(() => loadFormState() ?? initialFormState())
-  const [calcForm, setCalcForm] = useState<FormState>(form)
-  const [touched, setTouched] = useState<ReadonlySet<InputField>>(new Set())
-  const [confirmReset, setConfirmReset] = useState(false)
-
-  useEffect(() => saveFormState(form), [form])
-
-  const draft = useMemo(() => toDraft(form), [form])
-  const calcDraft = useMemo(() => toDraft(calcForm), [calcForm])
-  const validation = useMemo(() => validate(calcDraft), [calcDraft])
-  const result = useMemo(() => (validation.ok ? calculate(validation.inputs) : null), [validation])
-  const unreadable = useMemo(() => unreadableFields(form), [form])
-
-  const errors = new Map<InputField, string>()
-  if (!validation.ok) for (const e of validation.errors) if (!errors.has(e.field)) errors.set(e.field, e.message)
-
-  const kmWarning =
-    calcDraft.annualKm !== undefined && Number.isFinite(calcDraft.annualKm)
-      ? warnings({ annualKm: calcDraft.annualKm })[0]
-      : undefined
-  // Standardværdierne for I5 og I6 følger det, der står i felterne lige nu.
-  const loanNeed = loanNeedOf(draft)
-
-  function messages(field: InputField, hint?: string): FieldMessages {
-    const error = unreadable.has(field) ? UNREADABLE : touched.has(field) ? errors.get(field) : undefined
-    return {
-      hint,
-      error,
-      warning: field === kmWarning?.field ? kmWarning.message : undefined,
-      note: FIELD_NOTES.find((n) => n.field === field)?.text,
-    }
-  }
-
-  /** Tømmer alle felter og det gemte, så siden starter forfra med standardværdierne. */
-  function resetAll() {
-    clearFormState()
-    const fresh = initialFormState()
-    setForm(fresh)
-    setCalcForm(fresh)
-    setTouched(new Set())
-    setConfirmReset(false)
-  }
-
-  function touch(field: InputField) {
-    setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)))
-  }
-
-  /** Opdaterer felterne og, hvis `commit`, også det der regnes på. */
-  function apply(next: FormState, commit: boolean) {
-    setForm(next)
-    if (commit) setCalcForm(next)
-  }
-
-  function withNumber(state: FormState, field: NumberField, value: string): FormState {
-    return { ...state, numbers: { ...state.numbers, [field]: value } }
-  }
-
-  /** Dansk formatering af et tal, fx "200000" → "200.000". Ulæselig tekst bliver stående. */
-  function tidy(text: string): string {
-    const value = parseDanishNumber(text)
-    return value !== undefined && Number.isFinite(value) ? formatInput(value) : text
-  }
-
-  function commitNumber(field: NumberField) {
-    apply(withNumber(form, field, tidy(form.numbers[field])), true)
-    touch(field)
-  }
-
-  function numberField(field: NumberField, label: string, unit: string, options: { hint?: string; placeholder?: string } = {}) {
-    const msg = messages(field, options.hint)
-    return (
-      <Field id={field} label={label} {...msg}>
-        {(describedBy) => (
-          <NumberInput
-            id={field}
-            value={form.numbers[field]}
-            onChange={(v) => apply(withNumber(form, field, v), false)}
-            onBlur={() => commitNumber(field)}
-            unit={unit}
-            placeholder={options.placeholder}
-            describedBy={describedBy}
-            invalid={!!msg.error}
-          />
-        )}
-      </Field>
-    )
-  }
-
-  function periodicField(field: PeriodicField, label: string, hint?: string) {
-    const msg = messages(field, hint)
-    const value = form.periodic[field]
-    const withPeriodic = (change: Partial<typeof value>): FormState => ({
-      ...form,
-      periodic: { ...form.periodic, [field]: { ...value, ...change } },
-    })
-    return (
-      <Field id={field} label={label} {...msg} group>
-        {(describedBy) => (
-          <div className="periodic">
-            <NumberInput
-              id={field}
-              label={`${label}, beløb`}
-              value={value.amount}
-              onChange={(amount) => apply(withPeriodic({ amount }), false)}
-              onBlur={() => {
-                apply(withPeriodic({ amount: tidy(value.amount) }), true)
-                touch(field)
-              }}
-              unit="kr."
-              describedBy={describedBy}
-              invalid={!!msg.error}
-            />
-            <FrequencySelect
-              id={`${field}-frequency`}
-              value={value.frequency}
-              onChange={(frequency) => apply(withPeriodic({ frequency }), true)}
-              onBlur={() => touch(field)}
-              describedBy={describedBy}
-              invalid={!!msg.error}
-            />
-          </div>
-        )}
-      </Field>
-    )
-  }
-
-  const depMsg = messages('depreciationPct')
-  // Lånefelterne skjules først, når udbetalingen er bekræftet (feltet forladt).
-  const noLoan = loanNeedOf(calcDraft) === 0
-  const problemCount = validation.ok ? 0 : new Set(validation.errors.map((e) => e.field)).size
-
+  const form = useFormState()
   return (
-    <>
-      <header className="page-header">
-        <div className="page-header-text">
-          <h1>Lån eller leasing</h1>
-          <p>
-            Sammenlign de samlede omkostninger (TCO) ved at købe bilen med billån og ved privatleasing af den samme bil
-            efter 1, 2, 3 og 4 år.
-          </p>
-        </div>
-        <div className="reset" role="group" aria-label="Nulstil">
-          {confirmReset ? (
-            <>
-              <span className="reset-question">Slet alle indtastninger?</span>
-              <button type="button" className="button button-danger" onClick={resetAll}>
-                Ja, nulstil
-              </button>
-              <button type="button" className="button button-quiet" onClick={() => setConfirmReset(false)}>
-                Annuller
-              </button>
-            </>
-          ) : (
-            <button type="button" className="button button-quiet" onClick={() => setConfirmReset(true)}>
-              <ResetIcon />
-              Nulstil alt
-            </button>
-          )}
-        </div>
-      </header>
-
+    <FormContext.Provider value={form}>
+      <PageHeader />
       <main className="page">
         <form
           className="inputs"
           onSubmit={(e) => {
             // Enter i et felt beregner også.
             e.preventDefault()
-            apply(form, true)
+            form.commitAll()
           }}
           noValidate
         >
-          <section className="card card-shared" aria-labelledby="shared-title">
-            <h2 id="shared-title">Fælles for begge</h2>
-            <p className="section-intro">Udgifter og kørsel, der er de samme, uanset om du køber eller leaser.</p>
-            <div className="field-grid">
-              {periodicField('insurance', 'Forsikring')}
-              {periodicField('ownershipTax', 'Ejerafgift')}
-              <Field id="annualKm" label="Forventet kørsel pr. år" {...messages('annualKm')}>
-                {(describedBy) => (
-                  <Slider
-                    id="annualKm"
-                    stops={KM_STOPS}
-                    value={draft.annualKm}
-                    onChange={(v) => apply(withNumber(form, 'annualKm', formatInput(v)), true)}
-                    format={(v) => `${formatInput(v)} km`}
-                    describedBy={describedBy}
-                  />
-                )}
-              </Field>
-            </div>
-          </section>
-
+          <SharedCard />
           <div className="duel">
-            <section className="card card-side card-buy" aria-labelledby="buy-title">
-              <header className="side-head">
-                <h2 id="buy-title">
-                  <span className="dot" aria-hidden="true" />
-                  Køb med billån
-                </h2>
-                <p>Du ejer bilen og kan sælge den igen.</p>
-              </header>
-              {numberField('purchasePrice', 'Købspris', 'kr.', { hint: 'Faktisk pris efter eventuel rabat.' })}
-              {numberField('downPayment', 'Udbetaling', 'kr.')}
-              {noLoan ? (
-                <p className="info" role="status">
-                  Intet lån, da udbetalingen svarer til købsprisen. Felterne om lånet er skjult.
-                </p>
-              ) : (
-                <>
-                  {numberField('interestRatePct', 'Debitorrente', '% p.a.')}
-                  {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.')}
-                  {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
-                    placeholder: loanNeed !== undefined ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
-                    hint:
-                      loanNeed !== undefined
-                        ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
-                        : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
-                  })}
-                  {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
-                    placeholder: loanNeed !== undefined ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
-                    hint:
-                      loanNeed !== undefined
-                        ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
-                        : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
-                  })}
-                  {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
-                  {numberField('interestDeductionPct', 'Fradragsprocent for renter', '%', {
-                    hint: 'Renterne på lånet giver fradrag i skatten. Trækkes fra i TCO for køb.',
-                  })}
-                </>
-              )}
-              {periodicField('service', 'Service', 'Ved leasing er service inkluderet.')}
-              <Field id="depreciationPct" label="Afskrivning pr. år" {...depMsg} group>
-                {(describedBy) => (
-                  <div className="depreciation">
-                    {form.depreciation.map((value, i) => (
-                      <div key={i} className="depreciation-year">
-                        <label htmlFor={`depreciation-${i}`}>År {i + 1}</label>
-                        <NumberInput
-                          id={`depreciation-${i}`}
-                          value={value}
-                          onChange={(v) => {
-                            const next = [...form.depreciation] as FormState['depreciation']
-                            next[i] = v
-                            apply({ ...form, depreciation: next }, false)
-                          }}
-                          onBlur={() => {
-                            const next = [...form.depreciation] as FormState['depreciation']
-                            next[i] = tidy(next[i])
-                            apply({ ...form, depreciation: next }, true)
-                            touch('depreciationPct')
-                          }}
-                          unit="%"
-                          describedBy={describedBy}
-                          invalid={!!depMsg.error}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Field>
-            </section>
+            <BuyCard />
             <div className="vs" aria-hidden="true">
               <CompareIcon />
             </div>
-            <section className="card card-side card-lease" aria-labelledby="lease-title">
-              <header className="side-head">
-                <h2 id="lease-title">
-                  <span className="dot" aria-hidden="true" />
-                  Privatleasing
-                </h2>
-                <p>Du lejer bilen og afleverer den, når aftalen slutter.</p>
-              </header>
-              <Field id="leaseTermMonths" label="Leasingaftalens løbetid">
-                {(describedBy) => (
-                  <Slider
-                    id="leaseTermMonths"
-                    stops={LEASE_TERMS}
-                    value={draft.leaseTermMonths}
-                    onChange={(v) => apply(withNumber(form, 'leaseTermMonths', formatInput(v)), true)}
-                    format={(v) => `${v} mdr.`}
-                    tickLabel={(v) => `${v}`}
-                    describedBy={describedBy}
-                  />
-                )}
-              </Field>
-              {numberField('leaseInitialPayment', 'Førstegangsydelse', 'kr.')}
-              {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
-              {numberField('returnCost', 'Egenbetaling ved aflevering', 'kr.')}
-            </section>
+            <LeaseCard />
           </div>
-
-          <section className="card" aria-labelledby="return-title">
-            <h2 id="return-title">Afkast af forskellen</h2>
-            <p className="section-intro">
-              Det billigste scenarie sætter hver måned forskellen ind på en konto med rente.
-            </p>
-            <div className="field-grid">
-              {numberField('annualReturnPct', 'Årlig afkastrente', '%')}
-              {numberField('returnTaxPct', 'Skattesats på afkast', '%')}
-            </div>
-          </section>
+          <ReturnCard />
         </form>
-
-        <div className="results">
-          {result ? (
-            <Results result={result} />
-          ) : (
-            <section className="card status">
-              <h2>Resultat</h2>
-              <p>
-                Udfyld de påkrævede felter for at se sammenligningen.{' '}
-                {problemCount === 1 && '1 felt mangler eller skal rettes.'}
-                {problemCount > 1 && `${problemCount} felter mangler eller skal rettes.`}
-              </p>
-              <button
-                type="button"
-                className="button"
-                onClick={() => setTouched(new Set(validation.ok ? [] : validation.errors.map((e) => e.field)))}
-              >
-                Vis felterne
-              </button>
-            </section>
-          )}
-        </div>
+        <div className="results">{form.result ? <Results result={form.result} /> : <StatusCard />}</div>
       </main>
-    </>
+    </FormContext.Provider>
   )
 }
 
