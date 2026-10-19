@@ -58,9 +58,25 @@ describe('validering', () => {
     expect(errorFields({ ...UDFYLDT, downPayment: 120001 })).toEqual(['downPayment'])
   })
 
-  it('uden lån er I3 og I4 valgfrie', () => {
-    const result = validate({ ...UDFYLDT, downPayment: 120000, interestRatePct: undefined, loanTermMonths: undefined })
+  it('uden lån ignoreres lånefelterne I3-I7, også ugyldige værdier', () => {
+    const result = validate({
+      ...UDFYLDT,
+      downPayment: 120000,
+      interestRatePct: undefined,
+      loanTermMonths: Number.NaN,
+      registrationFee: -1,
+      establishmentFee: undefined,
+      monthlyLoanFee: undefined,
+    })
     expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect([
+      result.inputs.interestRatePct,
+      result.inputs.loanTermMonths,
+      result.inputs.registrationFee,
+      result.inputs.establishmentFee,
+      result.inputs.monthlyLoanFee,
+    ]).toEqual([0, 0, 0, 0, 0])
   })
 
   it('med lån er I3 og I4 påkrævede', () => {

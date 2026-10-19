@@ -368,3 +368,11 @@ details[open] > summary::before {
 details > summary h2 {
   margin: 0;
 }
+
+.info {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: 0.88rem;
+}

@@ -131,7 +131,7 @@ function App() {
   }
 
   const depMsg = messages('depreciationPct')
-  const noLoanHint = hasLoanNeed && loanNeed === 0 ? 'Ikke nødvendig, da der intet lån er.' : undefined
+  const noLoan = hasLoanNeed && loanNeed === 0
   const missingCount = validation.ok ? 0 : new Set(validation.errors.map((e) => e.field)).size
 
   return (
@@ -150,21 +150,29 @@ function App() {
             <h2 id="buy-title">Køb med billån</h2>
             {numberField('purchasePrice', 'Købspris', 'kr.', { hint: 'Faktisk pris efter eventuel rabat.' })}
             {numberField('downPayment', 'Udbetaling', 'kr.')}
-            {numberField('interestRatePct', 'Debitorrente', '% p.a.', { hint: noLoanHint })}
-            {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.', { hint: noLoanHint })}
-            {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
-              placeholder: hasLoanNeed ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
-              hint: hasLoanNeed
-                ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
-                : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
-            })}
-            {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
-              placeholder: hasLoanNeed ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
-              hint: hasLoanNeed
-                ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
-                : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
-            })}
-            {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
+            {noLoan ? (
+              <p className="info" role="status">
+                Intet lån, da udbetalingen svarer til købsprisen. Felterne om lånet er skjult.
+              </p>
+            ) : (
+              <>
+                {numberField('interestRatePct', 'Debitorrente', '% p.a.')}
+                {numberField('loanTermMonths', 'Lånets løbetid', 'mdr.')}
+                {numberField('registrationFee', 'Tinglysningsafgift', 'kr.', {
+                  placeholder: hasLoanNeed ? formatInput(defaultRegistrationFee(loanNeed)) : undefined,
+                  hint: hasLoanNeed
+                    ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultRegistrationFee(loanNeed))}`
+                    : 'Lad feltet stå tomt for at bruge standard: 1.850 kr. + 1,5 % af lånebehovet.',
+                })}
+                {numberField('establishmentFee', 'Stiftelsesprovision', 'kr.', {
+                  placeholder: hasLoanNeed ? formatInput(defaultEstablishmentFee(loanNeed)) : undefined,
+                  hint: hasLoanNeed
+                    ? `Lad feltet stå tomt for at bruge standard: ${formatKr(defaultEstablishmentFee(loanNeed))}`
+                    : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
+                })}
+                {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
+              </>
+            )}
             {periodicField('service', 'Service', 'Ved leasing er service inkluderet.')}
             <Field id="depreciationPct" label="Afskrivning pr. år" {...depMsg} group>
               {(describedBy) => (

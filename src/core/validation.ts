@@ -71,11 +71,14 @@ export function validate(draft: InputDraft): ValidationResult {
     add('downPayment', 'Udbetalingen må ikke være større end købsprisen.')
   }
 
-  // I3 og I4 er kun påkrævede, når der er et lån (L > 0).
+  // Lånefelterne I3-I7 bruges kun, når der er et lån (L > 0). Uden lån ignoreres de helt.
   const loanNeed = calculateLoanNeed(purchasePrice, downPayment)
   const hasLoan = loanNeed > 0
   let interestRatePct = 0
   let loanTermMonths = 0
+  let registrationFee = 0
+  let establishmentFee = 0
+  let monthlyLoanFee = 0
   if (hasLoan) {
     interestRatePct = required('interestRatePct', draft.interestRatePct, nonNegative, 'Renten må ikke være negativ.')
     loanTermMonths = required(
@@ -84,11 +87,11 @@ export function validate(draft: InputDraft): ValidationResult {
       (v) => v > 0 && Number.isInteger(v),
       'Løbetiden skal være et helt antal måneder større end 0.',
     )
+    registrationFee = optional('registrationFee', draft.registrationFee, defaultRegistrationFee(loanNeed), nonNegative, NON_NEGATIVE)
+    establishmentFee = optional('establishmentFee', draft.establishmentFee, defaultEstablishmentFee(loanNeed), nonNegative, NON_NEGATIVE)
+    monthlyLoanFee = required('monthlyLoanFee', draft.monthlyLoanFee, nonNegative, NON_NEGATIVE)
   }
 
-  const registrationFee = optional('registrationFee', draft.registrationFee, defaultRegistrationFee(loanNeed), nonNegative, NON_NEGATIVE)
-  const establishmentFee = optional('establishmentFee', draft.establishmentFee, defaultEstablishmentFee(loanNeed), nonNegative, NON_NEGATIVE)
-  const monthlyLoanFee = required('monthlyLoanFee', draft.monthlyLoanFee, nonNegative, NON_NEGATIVE)
   const service = periodic('service', draft.service)
 
   const depreciation = draft.depreciationPct
