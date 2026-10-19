@@ -47,6 +47,19 @@ export function remainingDebt(loan: Loan, payments: number): number {
   return h * growth - (a * (growth - 1)) / r
 }
 
+/** Renten i ydelse nr. k (1-baseret) = restgælden efter k − 1 ydelser × r. */
+export function interestInPayment(loan: Loan, payment: number): number {
+  if (payment < 1 || payment > loan.termMonths) return 0
+  return remainingDebt(loan, payment - 1) * loan.monthlyRate
+}
+
+/** B7: rentefradrag ved t = renterne i ydelse 1 … min(t, I4) × fradragsprocent. */
+export function interestDeduction(loan: Loan, months: number, deductionPct: number): number {
+  let interest = 0
+  for (let k = 1; k <= paymentsMade(loan, months); k++) interest += interestInPayment(loan, k)
+  return (interest * deductionPct) / 100
+}
+
 /** O3: afviklingsprofil, én række pr. måned i hele lånets løbetid. */
 export function amortizationSchedule(loan: Loan, monthlyLoanFee: number): AmortizationRow[] {
   const rows: AmortizationRow[] = []

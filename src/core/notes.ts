@@ -11,23 +11,15 @@ export interface FieldNote {
   text: string
 }
 
-// O5-O7 og O9
+// O5 og O9
 export const FIELD_NOTES: readonly FieldNote[] = [
   {
     field: 'depreciationPct',
     text: 'Kilde: Bilbasen/Bilinfo (ca. 2016): ca. 20 % tab i år 1 og ca. 50 % efter 4 år. Fordelingen på år 2-4 er ligelig.',
   },
   {
-    field: 'earlyExitCost',
-    text: "0 kr. forudsætter FDM's standardkontrakt. Tjek egen aftale.",
-  },
-  {
     field: 'returnCost',
     text: 'Egenbetalingen kan dækkes af en afleveringsforsikring. Så svarer beløbet til forsikringens selvrisiko, fx 5.000 kr.',
-  },
-  {
-    field: 'returnTaxPct',
-    text: 'Skat beregnes samlet af gevinsten. Der tages ikke højde for grænsen på 55.000 kr. eller skat år for år.',
   },
 ]
 

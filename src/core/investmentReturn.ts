@@ -1,5 +1,6 @@
 // Afkast (SPEC.md 2.6): det billigste scenarie i en måned indskyder forskellen på sin konto.
 
+import { interestInPayment } from './loan.ts'
 import { runningCostDueInMonth } from './runningCosts.ts'
 import type { Inputs, Loan } from './types.ts'
 
@@ -16,7 +17,8 @@ export interface InvestmentReturn {
 /**
  * Udgiften i hver måned m = 0 … t − 1 i begge scenarier.
  * Måned m dækker perioden fra m til m + 1: forudbetalinger falder i starten af måneden og
- * låneydelse nr. m + 1 (bagud) i slutningen. Engangsbeløb ved t (restgæld, km, aflevering, exit) indgår ikke.
+ * låneydelse nr. m + 1 (bagud) i slutningen, fratrukket rentefradraget for den ydelse.
+ * Engangsbeløb ved t (restgæld og egenbetaling ved aflevering) indgår ikke.
  */
 export function monthlyOutflows(inputs: Inputs, loan: Loan, months: number): MonthlyOutflows {
   const buy: number[] = []
@@ -25,7 +27,7 @@ export function monthlyOutflows(inputs: Inputs, loan: Loan, months: number): Mon
     const shared = runningCostDueInMonth(inputs.insurance, m) + runningCostDueInMonth(inputs.ownershipTax, m)
     buy.push(
       (m === 0 ? inputs.downPayment : 0) +
-        (m < loan.termMonths ? loan.monthlyPayment : 0) +
+        (m < loan.termMonths ? loan.monthlyPayment - (interestInPayment(loan, m + 1) * inputs.interestDeductionPct) / 100 : 0) +
         runningCostDueInMonth(inputs.service, m) +
         shared,
     )

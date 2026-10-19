@@ -12,9 +12,10 @@ import {
 } from '../core/index.ts'
 import type { InputField } from '../core/index.ts'
 import { Field, FrequencySelect, NumberInput, Slider } from './fields.tsx'
+import { CompareIcon, ResetIcon } from './icons.tsx'
 import type { FieldMessages } from './fields.tsx'
 import { formatInput, formatKr, parseDanishNumber } from './format.ts'
-import { initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
+import { clearFormState, initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
 import type { FormState, NumberField, PeriodicField } from './form.ts'
 import { Results } from './Results.tsx'
 
@@ -26,6 +27,7 @@ function App() {
   const [form, setForm] = useState<FormState>(() => loadFormState() ?? initialFormState())
   const [calcForm, setCalcForm] = useState<FormState>(form)
   const [touched, setTouched] = useState<ReadonlySet<InputField>>(new Set())
+  const [confirmReset, setConfirmReset] = useState(false)
 
   useEffect(() => saveFormState(form), [form])
 
@@ -61,6 +63,16 @@ function App() {
       warning: field === kmWarning?.field ? kmWarning.message : undefined,
       note: FIELD_NOTES.find((n) => n.field === field)?.text,
     }
+  }
+
+  /** Tømmer alle felter og det gemte, så siden starter forfra med standardværdierne. */
+  function resetAll() {
+    clearFormState()
+    const fresh = initialFormState()
+    setForm(fresh)
+    setCalcForm(fresh)
+    setTouched(new Set())
+    setConfirmReset(false)
   }
 
   function touch(field: InputField) {
@@ -154,11 +166,31 @@ function App() {
   return (
     <>
       <header className="page-header">
-        <h1>Lån eller leasing</h1>
-        <p>
-          Sammenlign de samlede omkostninger (TCO) ved at købe bilen med billån og ved privatleasing af den samme bil
-          efter 1, 2, 3 og 4 år.
-        </p>
+        <div className="page-header-text">
+          <h1>Lån eller leasing</h1>
+          <p>
+            Sammenlign de samlede omkostninger (TCO) ved at købe bilen med billån og ved privatleasing af den samme bil
+            efter 1, 2, 3 og 4 år.
+          </p>
+        </div>
+        <div className="reset" role="group" aria-label="Nulstil">
+          {confirmReset ? (
+            <>
+              <span className="reset-question">Slet alle indtastninger?</span>
+              <button type="button" className="button button-danger" onClick={resetAll}>
+                Ja, nulstil
+              </button>
+              <button type="button" className="button button-quiet" onClick={() => setConfirmReset(false)}>
+                Annuller
+              </button>
+            </>
+          ) : (
+            <button type="button" className="button button-quiet" onClick={() => setConfirmReset(true)}>
+              <ResetIcon />
+              Nulstil alt
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="page">
@@ -224,6 +256,9 @@ function App() {
                       : 'Lad feltet stå tomt for at bruge standard: 1,25 % af lånebehovet, min. 2.000, maks. 10.000 kr.',
                   })}
                   {numberField('monthlyLoanFee', 'Løbende lånegebyr', 'kr./md.')}
+                  {numberField('interestDeductionPct', 'Fradragsprocent for renter', '%', {
+                    hint: 'Renterne på lånet giver fradrag i skatten. Trækkes fra i TCO for køb.',
+                  })}
                 </>
               )}
               {periodicField('service', 'Service', 'Ved leasing er service inkluderet.')}
@@ -258,7 +293,7 @@ function App() {
               </Field>
             </section>
             <div className="vs" aria-hidden="true">
-              <span>vs</span>
+              <CompareIcon />
             </div>
             <section className="card card-side card-lease" aria-labelledby="lease-title">
               <header className="side-head">
@@ -283,75 +318,19 @@ function App() {
               </Field>
               {numberField('leaseInitialPayment', 'Førstegangsydelse', 'kr.')}
               {numberField('leaseMonthlyPayment', 'Månedlig leasingydelse', 'kr./md.')}
-              <Field
-              id="includedKmPerYear"
-              label="Inkluderede km pr. år"
-              {...messages(
-                'includedKmPerYear',
-                form.includedKmLinked ? 'Følger forventet kørsel, indtil du selv vælger.' : undefined,
-              )}
-            >
-              {(describedBy) => (
-                <>
-                  <Slider
-                    id="includedKmPerYear"
-                    stops={KM_STOPS}
-                    value={form.includedKmLinked ? draft.annualKm : draft.includedKmPerYear}
-                    onChange={(v) =>
-                      apply({ ...withNumber(form, 'includedKmPerYear', formatInput(v)), includedKmLinked: false }, true)
-                    }
-                    format={(v) => `${formatInput(v)} km`}
-                    describedBy={describedBy}
-                  />
-                  {!form.includedKmLinked && (
-                    <button
-                      type="button"
-                      className="link-button"
-                      onClick={() => apply({ ...form, includedKmLinked: true }, true)}
-                    >
-                      Brug forventet kørsel ({formatInput(draft.annualKm ?? 0)} km)
-                    </button>
-                  )}
-                </>
-              )}
-            </Field>
-            {numberField('excessKmPrice', 'Pris pr. overkørt km', 'kr.')}
-              {numberField('earlyExitCost', 'Exit-omkostning ved førtidig ophør', 'kr.')}
               {numberField('returnCost', 'Egenbetaling ved aflevering', 'kr.')}
             </section>
           </div>
 
           <section className="card" aria-labelledby="return-title">
             <h2 id="return-title">Afkast af forskellen</h2>
-            <fieldset className="field">
-              <legend className="field-label">Medregn afkast</legend>
-              <p className="field-hint" id="investDifference-hint">
-                Det billigste scenarie sætter hver måned forskellen ind på en konto med rente.
-              </p>
-              <div className="radio-row">
-                {[
-                  { value: true, label: 'Til' },
-                  { value: false, label: 'Fra' },
-                ].map((o) => (
-                  <label key={o.label} className="radio">
-                    <input
-                      type="radio"
-                      name="investDifference"
-                      checked={form.investDifference === o.value}
-                      onChange={() => apply({ ...form, investDifference: o.value }, true)}
-                      aria-describedby="investDifference-hint"
-                    />
-                    {o.label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            {form.investDifference && (
-              <>
-                {numberField('annualReturnPct', 'Årlig afkastrente', '%')}
-                {numberField('returnTaxPct', 'Skattesats på afkast', '%')}
-              </>
-            )}
+            <p className="section-intro">
+              Det billigste scenarie sætter hver måned forskellen ind på en konto med rente.
+            </p>
+            <div className="field-grid">
+              {numberField('annualReturnPct', 'Årlig afkastrente', '%')}
+              {numberField('returnTaxPct', 'Skattesats på afkast', '%')}
+            </div>
           </section>
         </form>
 

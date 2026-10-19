@@ -61,6 +61,8 @@ export function validate(draft: InputDraft): ValidationResult {
 
   const nonNegative = (v: number) => v >= 0
   const NON_NEGATIVE = 'Værdien må ikke være negativ.'
+  const percent = (v: number) => v >= 0 && v <= 100
+  const PERCENT_MESSAGE = 'Procenten skal være mellem 0 og 100.'
 
   // Køb
   const purchasePrice = required('purchasePrice', draft.purchasePrice, (v) => v > 0, 'Købsprisen skal være større end 0.')
@@ -69,7 +71,7 @@ export function validate(draft: InputDraft): ValidationResult {
     add('downPayment', 'Udbetalingen må ikke være større end købsprisen.')
   }
 
-  // Lånefelterne I3-I7 bruges kun, når der er et lån (L > 0). Uden lån ignoreres de helt.
+  // Lånefelterne I3-I7 og I23 bruges kun, når der er et lån (L > 0). Uden lån ignoreres de helt.
   const loanNeed = calculateLoanNeed(purchasePrice, downPayment)
   const hasLoan = loanNeed > 0
   let interestRatePct = 0
@@ -77,6 +79,7 @@ export function validate(draft: InputDraft): ValidationResult {
   let registrationFee = 0
   let establishmentFee = 0
   let monthlyLoanFee = 0
+  let interestDeductionPct = 0
   if (hasLoan) {
     interestRatePct = required('interestRatePct', draft.interestRatePct, nonNegative, 'Renten må ikke være negativ.')
     loanTermMonths = required(
@@ -88,6 +91,7 @@ export function validate(draft: InputDraft): ValidationResult {
     registrationFee = optional('registrationFee', draft.registrationFee, defaultRegistrationFee(loanNeed), nonNegative, NON_NEGATIVE)
     establishmentFee = optional('establishmentFee', draft.establishmentFee, defaultEstablishmentFee(loanNeed), nonNegative, NON_NEGATIVE)
     monthlyLoanFee = required('monthlyLoanFee', draft.monthlyLoanFee, nonNegative, NON_NEGATIVE)
+    interestDeductionPct = required('interestDeductionPct', draft.interestDeductionPct, percent, PERCENT_MESSAGE)
   }
 
   const service = periodic('service', draft.service)
@@ -104,9 +108,7 @@ export function validate(draft: InputDraft): ValidationResult {
   // Begge
   const insurance = periodic('insurance', draft.insurance)
   const ownershipTax = periodic('ownershipTax', draft.ownershipTax)
-  const kmInRange = (v: number) => KM_STOPS.includes(v)
-  const KM_MESSAGE = 'Vælg mellem 10.000 og 45.000 km i trin af 5.000.'
-  const annualKm = required('annualKm', draft.annualKm, kmInRange, KM_MESSAGE)
+  const annualKm = required('annualKm', draft.annualKm, (v) => KM_STOPS.includes(v), 'Vælg mellem 10.000 og 45.000 km i trin af 5.000.')
 
   // Leasing
   const leaseTermMonths = required(
@@ -117,22 +119,11 @@ export function validate(draft: InputDraft): ValidationResult {
   ) as LeaseTerm
   const leaseInitialPayment = required('leaseInitialPayment', draft.leaseInitialPayment, nonNegative, NON_NEGATIVE)
   const leaseMonthlyPayment = required('leaseMonthlyPayment', draft.leaseMonthlyPayment, (v) => v > 0, 'Ydelsen skal være større end 0.')
-  // I16 følger I12, når brugeren ikke selv har valgt en værdi.
-  const includedKmPerYear = optional('includedKmPerYear', draft.includedKmPerYear, annualKm, kmInRange, KM_MESSAGE)
-  const excessKmPrice = required('excessKmPrice', draft.excessKmPrice, nonNegative, NON_NEGATIVE)
-  const earlyExitCost = required('earlyExitCost', draft.earlyExitCost, nonNegative, NON_NEGATIVE)
   const returnCost = required('returnCost', draft.returnCost, nonNegative, NON_NEGATIVE)
 
-  // Afkast. I21 og I22 er kun påkrævede ved "til".
-  const investDifference = draft.investDifference
-  let annualReturnPct = 0
-  let returnTaxPct = 0
-  if (investDifference === undefined) {
-    add('investDifference', 'Vælg til eller fra.')
-  } else if (investDifference) {
-    annualReturnPct = required('annualReturnPct', draft.annualReturnPct, nonNegative, 'Renten må ikke være negativ.')
-    returnTaxPct = required('returnTaxPct', draft.returnTaxPct, (v) => v >= 0 && v <= 100, 'Skattesatsen skal være mellem 0 og 100 %.')
-  }
+  // Afkast regnes altid med.
+  const annualReturnPct = required('annualReturnPct', draft.annualReturnPct, nonNegative, 'Renten må ikke være negativ.')
+  const returnTaxPct = required('returnTaxPct', draft.returnTaxPct, percent, PERCENT_MESSAGE)
 
   if (errors.length > 0) return { ok: false, errors }
 
@@ -154,13 +145,10 @@ export function validate(draft: InputDraft): ValidationResult {
       leaseTermMonths,
       leaseInitialPayment,
       leaseMonthlyPayment,
-      includedKmPerYear,
-      excessKmPrice,
-      earlyExitCost,
       returnCost,
-      investDifference: investDifference ?? false,
       annualReturnPct,
       returnTaxPct,
+      interestDeductionPct,
     },
   }
 }

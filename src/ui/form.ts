@@ -4,10 +4,7 @@ import { createDefaultDraft } from '../core/index.ts'
 import type { Frequency, InputDraft, InputField } from '../core/index.ts'
 import { formatInput, parseDanishNumber } from './format.ts'
 
-export type NumberField = Exclude<
-  InputField,
-  'service' | 'insurance' | 'ownershipTax' | 'depreciationPct' | 'investDifference'
->
+export type NumberField = Exclude<InputField, 'service' | 'insurance' | 'ownershipTax' | 'depreciationPct'>
 export type PeriodicField = 'service' | 'insurance' | 'ownershipTax'
 
 export interface PeriodicText {
@@ -19,9 +16,6 @@ export interface FormState {
   numbers: Record<NumberField, string>
   periodic: Record<PeriodicField, PeriodicText>
   depreciation: [string, string, string, string]
-  investDifference: boolean
-  /** I16 følger I12, indtil brugeren selv vælger en værdi for I16. */
-  includedKmLinked: boolean
 }
 
 const NUMBER_FIELDS: readonly NumberField[] = [
@@ -36,12 +30,10 @@ const NUMBER_FIELDS: readonly NumberField[] = [
   'leaseTermMonths',
   'leaseInitialPayment',
   'leaseMonthlyPayment',
-  'includedKmPerYear',
-  'excessKmPrice',
-  'earlyExitCost',
   'returnCost',
   'annualReturnPct',
   'returnTaxPct',
+  'interestDeductionPct',
 ]
 
 export function initialFormState(): FormState {
@@ -56,23 +48,18 @@ export function initialFormState(): FormState {
     numbers,
     periodic: { service: periodic('service'), insurance: periodic('insurance'), ownershipTax: periodic('ownershipTax') },
     depreciation: [formatInput(dep[0]), formatInput(dep[1]), formatInput(dep[2]), formatInput(dep[3])],
-    investDifference: draft.investDifference ?? true,
-    includedKmLinked: true,
   }
 }
 
 export function toDraft(form: FormState): InputDraft {
   const draft: InputDraft = {}
   for (const field of NUMBER_FIELDS) draft[field] = parseDanishNumber(form.numbers[field])
-  // Udeladt I16 betyder "samme som I12" i core.
-  if (form.includedKmLinked) draft.includedKmPerYear = undefined
   for (const field of ['service', 'insurance', 'ownershipTax'] as const) {
     const { amount, frequency } = form.periodic[field]
     draft[field] = { amount: parseDanishNumber(amount), frequency: frequency === '' ? undefined : frequency }
   }
   const dep = form.depreciation.map((v) => parseDanishNumber(v) ?? Number.NaN)
   draft.depreciationPct = [dep[0], dep[1], dep[2], dep[3]]
-  draft.investDifference = form.investDifference
   return draft
 }
 
@@ -133,11 +120,14 @@ export function loadFormState(): FormState | null {
   const dep = Array.isArray(saved.depreciation) ? saved.depreciation : []
   const depreciation = base.depreciation.map((d, i) => text(dep[i], d)) as FormState['depreciation']
 
-  return {
-    numbers,
-    periodic,
-    depreciation,
-    investDifference: typeof saved.investDifference === 'boolean' ? saved.investDifference : base.investDifference,
-    includedKmLinked: typeof saved.includedKmLinked === 'boolean' ? saved.includedKmLinked : base.includedKmLinked,
+  return { numbers, periodic, depreciation }
+}
+
+/** Glemmer de gemte felter, så siden starter forfra med standardværdierne. */
+export function clearFormState(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Lageret er ikke tilgængeligt. Ignoreres.
   }
 }

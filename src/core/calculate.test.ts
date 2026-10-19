@@ -9,14 +9,14 @@ describe('samlet beregning', () => {
     const { comparison } = calculate(RENTEFRIT_LAAN)
     expect(comparison.map((row) => row.months)).toEqual([12, 24, 36])
     expect(comparison.map((row) => row.buy.total)).toEqual([41400, 67320, expect.closeTo(91221.6, 6)])
-    expect(comparison.map((row) => row.lease.total)).toEqual([69000, 119000, 165000])
-    expect(comparison[0].difference).toBe(-27600)
+    expect(comparison.map((row) => row.lease.total)).toEqual([60000, 105000, 150000])
+    expect(comparison[0].difference).toBe(-18600)
     expect(comparison.every((row) => row.cheapest === 'buy')).toBe(true)
   })
 
   it('billigst er leasing, når leasing har lavest TCO', () => {
     const { comparison } = calculate({ ...RENTEFRIT_LAAN, leaseMonthlyPayment: 500, leaseInitialPayment: 0 })
-    expect(comparison[0].lease.total).toBe(29000) // 12 × 500 + 6.000 + 3.000 + km 5.000 + 5.000 + exit 4.000
+    expect(comparison[0].lease.total).toBe(20000) // 12 × 500 + forsikring 6.000 + ejerafgift 3.000 + aflevering 5.000
     expect(comparison[0].cheapest).toBe('lease')
   })
 
@@ -28,12 +28,18 @@ describe('samlet beregning', () => {
       expect(row.buy.investmentReturn).toBe(expected.buy)
       expect(row.lease.investmentReturn).toBe(expected.lease)
     }
-    expect(comparison[0].lease.total).toBeCloseTo(69000 - comparison[0].lease.investmentReturn, 6)
+    expect(comparison[0].lease.total).toBeCloseTo(60000 - comparison[0].lease.investmentReturn, 6)
   })
 
-  it('afkast "fra" giver 0 kr. i afkast', () => {
+  it('0 % afkastrente giver 0 kr. i afkast', () => {
     const { comparison } = calculate(RENTEFRIT_LAAN)
     expect(comparison.every((row) => row.buy.investmentReturn === 0 && row.lease.investmentReturn === 0)).toBe(true)
+  })
+
+  it('O10: månedlige faste udgifter er med for hvert tidspunkt', () => {
+    const { comparison } = calculate(RENTEFRIT_LAAN)
+    expect(comparison[0].monthly.buy.beforeTax).toBe(3635)
+    expect(comparison[0].monthly.lease.afterTax).toBe(3750)
   })
 
   it('O3 dækker hele lånets løbetid, uafhængigt af leasingaftalen', () => {

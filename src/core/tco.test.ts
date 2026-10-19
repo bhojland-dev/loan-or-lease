@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { KONTANT_KOEB, KORT_LAAN, RENTEFRIT_LAAN } from './examples.ts'
-import { calculateLoan } from './loan.ts'
-import { buyTco, exitCost, excessKmCost, leaseTco } from './tco.ts'
+import { KONTANT_KOEB, KORT_LAAN, LAEREBOGSLAAN, RENTEFRIT_LAAN } from './examples.ts'
+import { calculateLoan, remainingDebt } from './loan.ts'
+import { buyTco, leaseTco } from './tco.ts'
 
 describe('TCO køb', () => {
   const loan = calculateLoan(RENTEFRIT_LAAN)
@@ -15,6 +15,7 @@ describe('TCO køb', () => {
       ownershipTax: 3000,
       service: 3000,
       residualValue: 96000,
+      interestDeduction: 0, // ingen rente, intet fradrag
       investmentReturn: 0,
       total: 41400,
     })
@@ -45,36 +46,37 @@ describe('TCO køb', () => {
 })
 
 describe('TCO leasing', () => {
-  it('RENTEFRIT_LAAN efter 12 mdr. er 69.000 kr.', () => {
+  it('RENTEFRIT_LAAN efter 12 mdr. er 60.000 kr.', () => {
     expect(leaseTco(RENTEFRIT_LAAN, 12, 0)).toEqual({
       initialPayment: 10000,
       monthlyPayments: 36000,
       insurance: 6000,
       ownershipTax: 3000,
-      excessKm: 5000, // 5.000 km × 1 kr.
       returnCost: 5000,
-      exitCost: 4000, // førtidig ophør
       investmentReturn: 0,
-      total: 69000,
+      total: 60000,
     })
   })
 
   it('RENTEFRIT_LAAN efter 24 og 36 mdr.', () => {
-    expect(leaseTco(RENTEFRIT_LAAN, 24, 0).total).toBe(119000)
-    expect(leaseTco(RENTEFRIT_LAAN, 36, 0).total).toBe(165000) // ingen exit ved aftalens udløb
+    expect(leaseTco(RENTEFRIT_LAAN, 24, 0).total).toBe(105000)
+    expect(leaseTco(RENTEFRIT_LAAN, 36, 0).total).toBe(150000)
   })
 
   it('afkastet trækkes fra', () => {
-    expect(leaseTco(RENTEFRIT_LAAN, 12, 400).total).toBe(68600)
+    expect(leaseTco(RENTEFRIT_LAAN, 12, 400).total).toBe(59600)
   })
+})
 
-  it('Km: underkørte km giver ingen godtgørelse', () => {
-    expect(excessKmCost({ annualKm: 10000, includedKmPerYear: 15000, excessKmPrice: 2 }, 24)).toBe(0)
-    expect(excessKmCost({ annualKm: 18000, includedKmPerYear: 15000, excessKmPrice: 0.5 }, 24)).toBe(3000)
-  })
-
-  it('Exit: kun når t < I13', () => {
-    expect(exitCost({ earlyExitCost: 4000, leaseTermMonths: 36 }, 24)).toBe(4000)
-    expect(exitCost({ earlyExitCost: 4000, leaseTermMonths: 36 }, 36)).toBe(0)
+describe('TCO køb med rentefradrag', () => {
+  it('LAEREBOGSLAAN: B7 = renterne i de betalte ydelser × 33 %, og det trækkes fra TCO', () => {
+    const loan = calculateLoan(LAEREBOGSLAAN)
+    // Renter i år 1 = 12 ydelser − afdrag (100.000 − restgæld efter 12).
+    const interest = 12 * loan.installment - (100000 - remainingDebt(loan, 12))
+    const tco = buyTco(LAEREBOGSLAAN, loan, 12, 0)
+    expect(tco.interestDeduction).toBeCloseTo(interest * 0.33, 6)
+    expect(tco.interestDeduction).toBeCloseTo(1821.28, 2) // ca. 5.519 kr. i renter × 33 %
+    const withoutDeduction = buyTco({ ...LAEREBOGSLAAN, interestDeductionPct: 0 }, loan, 12, 0)
+    expect(withoutDeduction.total - tco.total).toBeCloseTo(tco.interestDeduction, 6)
   })
 })

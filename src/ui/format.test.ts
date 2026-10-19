@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { validate } from '../core/index.ts'
 import { formatFraction, formatInput, formatKr, formatMonths, parseDanishNumber } from './format.ts'
-import { initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
+import { clearFormState, initialFormState, loadFormState, saveFormState, toDraft, unreadableFields } from './form.ts'
 
 describe('dansk formatering', () => {
   it('beløb i kr.', () => {
@@ -55,16 +55,7 @@ describe('formular', () => {
     expect(form.numbers.registrationFee).toBe('')
     expect(form.periodic.ownershipTax).toEqual({ amount: '460', frequency: 'halfYear' })
     expect(form.numbers.annualKm).toBe('15.000')
-    expect(form.includedKmLinked).toBe(true)
-  })
-
-  it('inkluderede km følger forventet kørsel, indtil brugeren selv vælger', () => {
-    const form = initialFormState()
-    form.numbers.annualKm = '25.000'
-    form.numbers.includedKmPerYear = '10.000'
-    expect(toDraft(form).includedKmPerYear).toBeUndefined()
-    form.includedKmLinked = false
-    expect(toDraft(form).includedKmPerYear).toBe(10000)
+    expect(form.numbers.interestDeductionPct).toBe('33')
   })
 
   it('et udfyldt skema giver gyldigt input', () => {
@@ -77,7 +68,6 @@ describe('formular', () => {
       annualKm: '20.000',
       leaseInitialPayment: '10.000',
       leaseMonthlyPayment: '3.000',
-      excessKmPrice: '1',
     })
     form.periodic.service = { amount: '3.000', frequency: 'year' }
     form.periodic.insurance = { amount: '6.000', frequency: 'year' }
@@ -105,6 +95,9 @@ describe('gemte felter', () => {
       setItem: (k: string, v: string) => {
         data[k] = v
       },
+      removeItem: (k: string) => {
+        delete data[k]
+      },
     })
     return data
   }
@@ -114,9 +107,15 @@ describe('gemte felter', () => {
     const form = initialFormState()
     form.numbers.purchasePrice = '200.000'
     form.periodic.insurance = { amount: '8.900', frequency: 'year' }
-    form.includedKmLinked = false
     saveFormState(form)
     expect(loadFormState()).toEqual(form)
+  })
+
+  it('nulstil glemmer det gemte', () => {
+    stubStorage()
+    saveFormState(initialFormState())
+    clearFormState()
+    expect(loadFormState()).toBeNull()
   })
 
   it('intet gemt eller ødelagt indhold giver null', () => {
@@ -131,7 +130,6 @@ describe('gemte felter', () => {
     const loaded = loadFormState()
     expect(loaded?.numbers.purchasePrice).toBe('150.000')
     expect(loaded?.periodic.ownershipTax).toEqual({ amount: '460', frequency: 'halfYear' })
-    expect(loaded?.includedKmLinked).toBe(true)
   })
 
   it('uden lager (fx privat vindue) sker der ingen fejl', () => {

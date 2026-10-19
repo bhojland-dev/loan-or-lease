@@ -25,17 +25,16 @@ Alle forudfyldte felter kan rettes af brugeren. Felter uden standardværdi skal 
 | I13 | Leasingaftalens løbetid (mdr.) | Leasing | 48 | 12, 24, 36 eller 48 |
 | I14 | Førstegangsydelse (kr.) | Leasing | Ingen | ≥ 0 |
 | I15 | Månedlig leasingydelse (kr.) | Leasing | Ingen | > 0 |
-| I16 | Inkluderede km/år | Leasing | Samme som I12. Følger I12, indtil brugeren selv vælger en anden værdi | 10.000-45.000 i trin af 5.000 |
-| I17 | Pris pr. overkørt km (kr.) | Leasing | Ingen | ≥ 0 |
-| I18 | Exit-omkostning ved førtidig ophør (kr.) | Leasing | 0 | ≥ 0 |
 | I19 | Egenbetaling ved aflevering (kr.) | Leasing | 5.000 | ≥ 0 |
-| I20 | Afkast til/fra | Begge | Til | – |
-| I21 | Årlig afkastrente (%) | Begge | 0,25 | ≥ 0. Kun ved I20 = til |
-| I22 | Skattesats på afkast (%) | Begge | 37 | 0-100. Kun ved I20 = til |
+| I21 | Årlig afkastrente (%) | Begge | 0,25 | ≥ 0 |
+| I22 | Skattesats på afkast (%) | Begge | 37 | 0-100 |
+| I23 | Fradragsprocent for renter (%) | Køb | 33 | 0-100. Kun ved lån |
 
 Frekvens for I8, I10 og I11 vælges blandt måned, kvartal, halvår og år.
 
-I3-I7 bruges og valideres kun ved lån (B1 > 0). Er udbetalingen lig købsprisen, er der intet lån, og felterne skjules og ignoreres.
+I3-I7 og I23 bruges og valideres kun ved lån (B1 > 0). Er udbetalingen lig købsprisen, er der intet lån, og felterne skjules og ignoreres.
+
+I16-I18 og I20 er udgået, og numrene genbruges ikke. Leasingaftalens inkluderede km antages at svare til I12, så der er hverken over- eller underkørsel. Afkast regnes altid med.
 
 ## 2. Beregning
 
@@ -51,6 +50,7 @@ Alle beregninger udføres for hvert tidspunkt t = 12, 24, 36, 48 mdr., hvor t �
 | B4 | Ydelse A (rente + afdrag) | H × r / (1 − (1 + r)^−I4). Ved r = 0: H / I4 |
 | B5 | Månedlig betaling | A + I7 |
 | B6 | Restgæld efter k ydelser | H × (1 + r)^k − A × ((1 + r)^k − 1) / r. Ved r = 0: H − A × k. Er k ≥ I4, er restgælden 0 |
+| B7 | Rentefradrag ved t | Summen af renterne i ydelse 1 … min(t, I4) × I23. Renten i ydelse k = B6(k − 1) × r |
 
 Låneydelser betales bagud. Ved tidspunkt t er min(t, I4) ydelser betalt, og restgælden opgøres efter den sidste. Er lånets løbetid kortere end t, stopper ydelsen. Stiftelsesomkostninger refunderes ikke ved indfrielse.
 
@@ -64,25 +64,23 @@ Beløb med frekvens betales forud. Antal betalinger ved tidspunkt t = t / frekve
 
 ### 2.4 TCO køb
 
-TCO køb(t) = I2 + min(t, I4) × B5 + B6(t) + forsikring(t) + ejerafgift(t) + service(t) − Restværdi(t) − Afkast køb(t)
+TCO køb(t) = I2 + min(t, I4) × B5 + B6(t) + forsikring(t) + ejerafgift(t) + service(t) − Restværdi(t) − B7(t) − Afkast køb(t)
 
-Udbetalingen betales i måned 0.
+Udbetalingen betales i måned 0. Kun renterne giver fradrag; gebyrer og stiftelsesomkostninger gør ikke.
 
 ### 2.5 TCO leasing
 
-TCO leasing(t) = I14 + t × I15 + forsikring(t) + ejerafgift(t) + Km(t) + I19 + Exit(t) − Afkast leasing(t)
+TCO leasing(t) = I14 + t × I15 + forsikring(t) + ejerafgift(t) + I19 − Afkast leasing(t)
 
 - Førstegangsydelsen betales i måned 0, leasingydelsen forud.
-- Km(t) = max(0, I12 − I16) × I17 × t / 12. Underkørte km giver ingen godtgørelse.
-- Exit(t) = I18, hvis t < I13, ellers 0.
-- I19 gælder ved hvert tidspunkt, da bilen afleveres.
+- I19 gælder ved hvert tidspunkt, da bilen afleveres. Førtidigt ophør koster ikke ekstra.
 - Service er altid inkluderet i ydelsen og tæller 0 kr.
 
-### 2.6 Afkast (kun ved I20 = til)
+### 2.6 Afkast
 
-For hver måned m = 0 … t − 1 beregnes udgiften i begge scenarier (måned 0 inkl. udbetaling og førstegangsydelse). Måned m dækker perioden fra m til m + 1: forudbetalinger falder i starten af måneden, og låneydelse nr. m + 1 (bagud) i slutningen. Alle min(t, I4) ydelser indgår dermed. Det scenarie med den laveste udgift indskyder forskellen på sin konto. Kontoen forrentes månedligt med I21 / 12. Et indskud i måned m forrentes til tidspunkt t, dvs. i t − m måneder.
+For hver måned m = 0 … t − 1 beregnes udgiften i begge scenarier (måned 0 inkl. udbetaling og førstegangsydelse). Måned m dækker perioden fra m til m + 1: forudbetalinger falder i starten af måneden, og låneydelse nr. m + 1 (bagud) i slutningen. Alle min(t, I4) ydelser indgår dermed. Rentefradraget for ydelse nr. m + 1 (renten × I23) trækkes fra købets udgift i samme måned. Det scenarie med den laveste udgift indskyder forskellen på sin konto. Kontoen forrentes månedligt med I21 / 12. Et indskud i måned m forrentes til tidspunkt t, dvs. i t − m måneder.
 
-Ved t: gevinst = saldo − samlede indskud. Afkast = gevinst × (1 − I22). Afkastet trækkes fra det pågældende scenaries TCO. Indfrielse af restgæld ved t indgår ikke i den månedlige udgift. Det gør engangsbeløbene ved t heller ikke: Km(t), I19 og Exit(t).
+Ved t: gevinst = saldo − samlede indskud. Afkast = gevinst × (1 − I22). Afkastet trækkes fra det pågældende scenaries TCO. Indfrielse af restgæld ved t indgår ikke i den månedlige udgift. Det gør engangsbeløbet I19 ved t heller ikke.
 
 ### 2.7 Break-even
 
@@ -91,6 +89,15 @@ Break-even-restværdi(t) = TCO køb(t) uden restværdi − TCO leasing(t)
 Break-even-værditab(t) = 1 − Break-even-restværdi(t) / I1
 
 Er det forventede værditab mindre end break-even, er køb billigst.
+
+### 2.8 Månedlige faste udgifter
+
+Gennemsnitlig udgift pr. måned frem til tidspunkt t, uden engangsbeløb (udbetaling, førstegangsydelse, restgæld og I19):
+
+- Køb før skat = (min(t, I4) × B5 + forsikring(t) + ejerafgift(t) + service(t)) / t
+- Køb efter skat = Køb før skat − B7(t) / t
+- Leasing før skat = (t × I15 + forsikring(t) + ejerafgift(t)) / t
+- Leasing efter skat = Leasing før skat (intet fradrag)
 
 ## 3. Output
 
@@ -101,10 +108,11 @@ Er det forventede værditab mindre end break-even, er køb billigst.
 | O3 | Afviklingsprofil | Lånets hele løbetid, én række pr. måned: ydelse, rente, afdrag, løbende gebyr, restgæld |
 | O4 | Advarsel km | Er I12 > 20.000 km/år: restværdien ved køb kan være for høj, og afskrivningsprocenterne bør hæves |
 | O5 | Note ved I9 | Kilde: Bilbasen/Bilinfo (ca. 2016): ca. 20 % tab i år 1 og ca. 50 % efter 4 år. Fordelingen på år 2-4 er ligelig |
-| O6 | Note ved I18 | 0 kr. forudsætter FDM's standardkontrakt. Tjek egen aftale |
-| O7 | Note ved I22 | Skat beregnes samlet af gevinsten. Der tages ikke højde for grænsen på 55.000 kr. eller skat år for år |
 | O8 | Validering | Udbetaling > købspris giver fejl. Beregning gennemføres ikke, før alle påkrævede felter er udfyldt |
 | O9 | Note ved I19 | Egenbetalingen kan dækkes af en afleveringsforsikring. Så svarer beløbet til forsikringens selvrisiko, fx 5.000 kr. |
+| O10 | Månedlige faste udgifter | For hvert tidspunkt t: køb og leasing før og efter skat, jf. 2.8 |
+
+O6 og O7 er udgået.
 
 ## 4. Forenklinger, åbne punkter og kilder
 
@@ -113,8 +121,10 @@ Er det forventede værditab mindre end break-even, er køb billigst.
 - Standardværdier for afskrivning er ca. 10 år gamle og skelner ikke mellem el og fossil.
 - Afskrivning afhænger ikke af km; der vises kun en advarsel (O4).
 - Lånets omkostninger beregnes af lånebehovet (forskel ca. 180 kr. ved 160.000 kr.).
-- Skat af afkast beregnes samlet med én sats.
-- Exit uden gebyr og service inkluderet bygger på FDM's standardkontrakt.
+- Skat af afkast beregnes samlet med én sats. Der tages ikke højde for grænsen på 55.000 kr. eller skat år for år.
+- Rentefradrag beregnes med én sats (I23) uden hensyn til grænsen for negativ kapitalindkomst, og fradraget falder samme måned som renten.
+- Leasing antages uden over- eller underkørte km og uden omkostning ved førtidigt ophør.
+- Service inkluderet i leasing bygger på FDM's standardkontrakt.
 
 ### Åbne punkter
 

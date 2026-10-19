@@ -1,7 +1,7 @@
 // Visning af O1-O3. Alle tal kommer fra src/core.
 
 import { useState } from 'react'
-import type { BuyBreakdown, Cheapest, ComparisonRow, LeaseBreakdown, Result } from '../core/index.ts'
+import type { BuyBreakdown, Cheapest, ComparisonRow, LeaseBreakdown, MonthlyCosts, Result } from '../core/index.ts'
 import { AnimatedNumber } from './AnimatedNumber.tsx'
 import { formatFraction, formatKr, formatMonths } from './format.ts'
 
@@ -19,6 +19,7 @@ export function Results({ result }: { result: Result }) {
   return (
     <>
       <Summary result={result} row={row} onChoose={setChosen} />
+      <Monthly row={row} />
       <Comparison result={result} />
       <BreakEven result={result} />
       <Breakdown row={row} />
@@ -98,6 +99,87 @@ function Summary({ result, row, onChoose }: { result: Result; row: ComparisonRow
         </div>
       </div>
     </section>
+  )
+}
+
+/** O10: månedlige faste udgifter før og efter skat for det valgte tidspunkt. */
+function Monthly({ row }: { row: ComparisonRow }) {
+  return (
+    <section className="card" aria-labelledby="monthly-title">
+      <h2 id="monthly-title">Månedlige faste udgifter</h2>
+      <p className="section-intro">
+        Gennemsnit pr. måned de første {formatMonths(row.months)}, uden engangsbeløb som udbetaling,
+        førstegangsydelse og restgæld.
+      </p>
+      <div className="monthly-grid">
+        <MonthlyTable side="buy" caption="Køb med billån" paymentLabel="Låneydelse inkl. gebyr" costs={row.monthly.buy} />
+        <MonthlyTable side="lease" caption="Privatleasing" paymentLabel="Leasingydelse" costs={row.monthly.lease} />
+      </div>
+    </section>
+  )
+}
+
+interface MonthlyTableProps {
+  side: 'buy' | 'lease'
+  caption: string
+  paymentLabel: string
+  costs: MonthlyCosts
+}
+
+function MonthlyTable({ side, caption, paymentLabel, costs }: MonthlyTableProps) {
+  const lines: { label: string; value: number; hidden?: boolean }[] = [
+    { label: paymentLabel, value: costs.payment },
+    { label: 'Forsikring', value: costs.insurance },
+    { label: 'Ejerafgift', value: costs.ownershipTax },
+    { label: 'Service', value: costs.service, hidden: side === 'lease' },
+  ]
+  return (
+    <div className={`table-scroll monthly-${side}`}>
+      <table>
+        <caption>
+          <span className="dot" aria-hidden="true" />
+          {caption}
+        </caption>
+        <tbody>
+          {lines
+            .filter((l) => !l.hidden)
+            .map((l) => (
+              <tr key={l.label}>
+                <th scope="row">{l.label}</th>
+                <td className="num">
+                  <AnimatedNumber value={l.value} format={formatKr} />
+                </td>
+              </tr>
+            ))}
+          {side === 'lease' && (
+            <tr>
+              <th scope="row">Service</th>
+              <td className="num muted">Inkluderet</td>
+            </tr>
+          )}
+          <tr className="subtotal">
+            <th scope="row">Pr. måned før skat</th>
+            <td className="num">
+              <AnimatedNumber value={costs.beforeTax} format={formatKr} />
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">− Rentefradrag</th>
+            <td className="num">
+              {side === 'lease' ? <span className="muted">Intet fradrag</span> : <AnimatedNumber value={costs.interestDeduction} format={formatKr} />}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Pr. måned efter skat</th>
+            <td className="num">
+              <AnimatedNumber value={costs.afterTax} format={formatKr} />
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   )
 }
 
@@ -195,6 +277,7 @@ const BUY_ROWS: readonly { key: keyof BuyBreakdown; label: string; sign: 1 | -1 
   { key: 'ownershipTax', label: 'Ejerafgift', sign: 1 },
   { key: 'service', label: 'Service', sign: 1 },
   { key: 'residualValue', label: 'Bilens restværdi (salgsværdi)', sign: -1 },
+  { key: 'interestDeduction', label: 'Rentefradrag', sign: -1 },
   { key: 'investmentReturn', label: 'Afkast efter skat', sign: -1 },
 ]
 
@@ -203,9 +286,7 @@ const LEASE_ROWS: readonly { key: keyof LeaseBreakdown; label: string; sign: 1 |
   { key: 'monthlyPayments', label: 'Leasingydelser', sign: 1 },
   { key: 'insurance', label: 'Forsikring', sign: 1 },
   { key: 'ownershipTax', label: 'Ejerafgift', sign: 1 },
-  { key: 'excessKm', label: 'Overkørte km', sign: 1 },
   { key: 'returnCost', label: 'Egenbetaling ved aflevering', sign: 1 },
-  { key: 'exitCost', label: 'Exit ved førtidig ophør', sign: 1 },
   { key: 'investmentReturn', label: 'Afkast efter skat', sign: -1 },
 ]
 

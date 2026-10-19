@@ -32,13 +32,10 @@ export interface InputDraft {
   leaseTermMonths?: number // I13
   leaseInitialPayment?: number // I14, førstegangsydelse
   leaseMonthlyPayment?: number // I15
-  includedKmPerYear?: number // I16
-  excessKmPrice?: number // I17
-  earlyExitCost?: number // I18
   returnCost?: number // I19, egenbetaling ved aflevering
-  investDifference?: boolean // I20, true = "til", false = "fra"
   annualReturnPct?: number // I21
   returnTaxPct?: number // I22
+  interestDeductionPct?: number // I23, fradragsprocent for renter
 }
 
 /** Valideret og komplet input. Procenter er stadig i procent (fx 6 = 6 %). */
@@ -58,13 +55,10 @@ export interface Inputs {
   leaseTermMonths: LeaseTerm // I13
   leaseInitialPayment: number // I14
   leaseMonthlyPayment: number // I15
-  includedKmPerYear: number // I16
-  excessKmPrice: number // I17
-  earlyExitCost: number // I18
   returnCost: number // I19
-  investDifference: boolean // I20
   annualReturnPct: number // I21
   returnTaxPct: number // I22
+  interestDeductionPct: number // I23 (0 når der intet lån er)
 }
 
 export type InputField = keyof InputDraft
@@ -106,6 +100,7 @@ export interface BuyBreakdown {
   ownershipTax: number
   service: number
   residualValue: number
+  interestDeduction: number // B7
   investmentReturn: number
   total: number
 }
@@ -115,14 +110,24 @@ export interface LeaseBreakdown {
   monthlyPayments: number
   insurance: number
   ownershipTax: number
-  excessKm: number
   returnCost: number
-  exitCost: number
   investmentReturn: number
   total: number
 }
 
 export type Cheapest = 'buy' | 'lease' | 'equal'
+
+/** O10: gennemsnitlig fast udgift pr. måned frem til t, uden engangsbeløb (SPEC.md 2.8). */
+export interface MonthlyCosts {
+  /** Låneydelse inkl. gebyr (køb) eller leasingydelse (leasing). */
+  payment: number
+  insurance: number
+  ownershipTax: number
+  service: number
+  beforeTax: number
+  interestDeduction: number
+  afterTax: number
+}
 
 /** O1: én række pr. tidspunkt t. */
 export interface ComparisonRow {
@@ -132,6 +137,7 @@ export interface ComparisonRow {
   /** TCO køb − TCO leasing. Negativ betyder, at køb er billigst. */
   difference: number
   cheapest: Cheapest
+  monthly: { buy: MonthlyCosts; lease: MonthlyCosts } // O10
 }
 
 /** O2: break-even pr. tidspunkt t. Værditab som brøk (0,2 = 20 %). */

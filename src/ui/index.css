@@ -95,6 +95,51 @@ h2 {
   margin: 0 auto;
   padding: 2.5rem 1rem 1.5rem;
   animation: rise-in 0.6s var(--ease-out) both;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reset-question {
+  font-size: 0.88rem;
+  font-weight: 600;
+  animation: message-in 0.2s var(--ease-out);
+}
+
+.button.button-quiet {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.button.button-quiet:hover {
+  color: var(--text);
+}
+
+.button.button-danger {
+  color: var(--surface);
+  background: var(--error);
+  animation: message-in 0.2s var(--ease-out);
+}
+
+.button-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .page-header p {
@@ -326,18 +371,6 @@ summary:focus-visible {
 
 .depreciation .unit {
   min-width: auto;
-}
-
-.radio-row {
-  display: flex;
-  gap: 1.25rem;
-  margin-top: 0.4rem;
-}
-
-.radio {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
 .button {
@@ -793,17 +826,35 @@ td.winner-lease {
   z-index: 1;
 }
 
-.vs span {
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
+.compare-icon {
+  display: block;
+  width: 3.25rem;
+  height: 3.25rem;
   border-radius: 50%;
-  font: 700 1rem var(--display);
-  color: var(--surface);
-  background: linear-gradient(135deg, var(--buy), var(--lease));
   box-shadow: var(--shadow-md), 0 0 0 5px var(--bg);
   animation: pop 0.5s var(--ease-out) 0.25s both;
+}
+
+.compare-icon-bg {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.compare-icon-buy,
+.compare-icon-lease {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.compare-icon-buy {
+  stroke: var(--buy);
+}
+
+.compare-icon-lease {
+  stroke: var(--lease);
 }
 
 @media (min-width: 860px) {
@@ -1018,4 +1069,51 @@ details[open] > summary {
 
 .link-button:hover {
   text-decoration-thickness: 2px;
+}
+
+/* Månedlige faste udgifter */
+
+.monthly-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 860px) {
+  .monthly-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.monthly-buy {
+  --accent: var(--buy);
+  --accent-soft: var(--buy-soft);
+}
+
+.monthly-lease {
+  --accent: var(--lease);
+  --accent-soft: var(--lease-soft);
+}
+
+.monthly-grid caption {
+  color: var(--accent);
+}
+
+.monthly-grid caption .dot {
+  margin-right: 0.45rem;
+  vertical-align: 0.05em;
+}
+
+.monthly-grid tr.subtotal th,
+.monthly-grid tr.subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+}
+
+.monthly-grid tfoot td {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+  font-family: var(--body);
 }

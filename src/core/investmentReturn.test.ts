@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MED_AFKAST, RENTEFRIT_LAAN } from './examples.ts'
+import { LAEREBOGSLAAN, MED_AFKAST, RENTEFRIT_LAAN } from './examples.ts'
 import { investmentReturn, monthlyOutflows } from './investmentReturn.ts'
 import { calculateLoan } from './loan.ts'
 
@@ -16,6 +16,13 @@ describe('afkast: månedlige udgifter', () => {
     expect(lease[1]).toBe(3000)
     expect(buy[6]).toBe(4135)
     expect(lease[6]).toBe(4500)
+  })
+
+  it('rentefradraget for ydelsen trækkes fra købets udgift i samme måned', () => {
+    const loan = calculateLoan(LAEREBOGSLAAN)
+    const flows = monthlyOutflows(LAEREBOGSLAAN, loan, 12)
+    // Måned 0: ydelse 1.933,28 − rente 500 × 33 % + service 3.000 + forsikring 6.000 + ejerafgift 1.500.
+    expect(flows.buy[0]).toBeCloseTo(loan.installment - 165 + 10500, 6)
   })
 
   it('udgifterne summer til TCO uden restgæld, restværdi og engangsbeløb ved t', () => {

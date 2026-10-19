@@ -5,7 +5,7 @@ import type { Inputs } from './types.ts'
 
 /**
  * Rentefrit lån, så alle beløb går op. Lånebehov 100.000, hovedstol 105.400, ydelse 105.400 / 40 = 2.635 kr.
- * Leasing 36 mdr. med 5.000 overkørte km/år til 1 kr./km.
+ * Uden rente er der intet rentefradrag, og med 0 % afkastrente er der intet afkast. Leasing 36 mdr.
  */
 export const RENTEFRIT_LAAN: Inputs = {
   purchasePrice: 120000,
@@ -23,13 +23,10 @@ export const RENTEFRIT_LAAN: Inputs = {
   leaseTermMonths: 36,
   leaseInitialPayment: 10000,
   leaseMonthlyPayment: 3000,
-  includedKmPerYear: 15000,
-  excessKmPrice: 1,
-  earlyExitCost: 4000,
   returnCost: 5000,
-  investDifference: false,
-  annualReturnPct: 0.25,
+  annualReturnPct: 0,
   returnTaxPct: 37,
+  interestDeductionPct: 33,
 }
 
 /** Lærebogslån: 100.000 kr. til 6 % p.a. over 60 mdr. giver en ydelse på 1.933,28 kr. */
@@ -58,12 +55,12 @@ export const KONTANT_KOEB: Inputs = {
   loanTermMonths: 0,
   registrationFee: 0,
   establishmentFee: 0,
+  interestDeductionPct: 0,
 }
 
-/** Som RENTEFRIT_LAAN, men med afkast "til" ved 12 % p.a. (1 % pr. måned), så afkastet er tydeligt. */
+/** Som RENTEFRIT_LAAN, men med afkast ved 12 % p.a. (1 % pr. måned), så afkastet er tydeligt. */
 export const MED_AFKAST: Inputs = {
   ...RENTEFRIT_LAAN,
-  investDifference: true,
   annualReturnPct: 12,
   returnTaxPct: 37,
 }

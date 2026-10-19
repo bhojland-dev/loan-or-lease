@@ -25,42 +25,36 @@ export const DEPRECIATION_PCT: DepreciationPct = [20, 14.5, 14.5, 14.5]
 export const OWNERSHIP_TAX_AMOUNT = 460
 export const OWNERSHIP_TAX_FREQUENCY: Frequency = 'halfYear'
 
-// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000, samme trin som I16. Kilde: SPEC.md (2026).
+// I12 forventet kørsel: 10.000-45.000 km/år i trin af 5.000. Kilde: SPEC.md (2026).
 export const ANNUAL_KM = 15000
 
 // I13 leasingaftalens løbetid. Kilde: SPEC.md (2026).
 export const LEASE_TERM_MONTHS: LeaseTerm = 48
 export const LEASE_TERMS: readonly LeaseTerm[] = [12, 24, 36, 48]
 
-// I12 og I16: km/år vælges mellem 10.000 og 45.000 i trin af 5.000. Kilde: SPEC.md (2026).
+// I12: km/år vælges mellem 10.000 og 45.000 i trin af 5.000. Kilde: SPEC.md (2026).
 export const KM_MIN = 10000
 export const KM_MAX = 45000
 export const KM_STEP = 5000
 
-/** De tilladte værdier for I12 og I16. */
+/** De tilladte værdier for I12. */
 export const KM_STOPS: readonly number[] = Array.from(
   { length: (KM_MAX - KM_MIN) / KM_STEP + 1 },
   (_, i) => KM_MIN + i * KM_STEP,
 )
 
-// I16 inkluderede km/år: standard er samme som I12 og følger I12, indtil brugeren selv vælger.
-// Kilde: SPEC.md (2026). Se validate(), hvor en manglende I16 sættes til I12.
-
-// I18 exit-omkostning ved førtidig ophør: 0 kr. forudsætter FDM's standardkontrakt.
-// Kilde: FDM, leasingkontrakt (2026).
-export const EARLY_EXIT_COST = 0
-
 // I19 egenbetaling ved aflevering. Kilde: SPEC.md (2026), jf. If, tilbageleveringsforsikring (Leasing Super).
 export const RETURN_COST = 5000
-
-// I20 afkast "til". Kilde: SPEC.md (2026).
-export const INVEST_DIFFERENCE = true
 
 // I21 årlig afkastrente i %. Kilde: SPEC.md (2026); kilden til satsen er ikke angivet.
 export const ANNUAL_RETURN_PCT = 0.25
 
 // I22 skattesats på afkast i %. Kilde: SPEC.md (2026), jf. BankInvest, skatteguide 2026.
 export const RETURN_TAX_PCT = 37
+
+// I23 fradragsprocent for renter: ca. skatteværdien af negativ kapitalindkomst under 50.000 kr. om året.
+// Kilde: valgt af Brian (2026).
+export const INTEREST_DEDUCTION_PCT = 33
 
 // O4: advarsel ved kørsel over denne grænse (km/år). Kilde: SPEC.md (2026).
 export const HIGH_MILEAGE_KM_PER_YEAR = 20000
@@ -81,7 +75,7 @@ export function defaultEstablishmentFee(loanNeed: number): number {
   return Math.min(ESTABLISHMENT_FEE_MAX, Math.max(ESTABLISHMENT_FEE_MIN, fee))
 }
 
-/** Formularens startværdier. I5, I6 og I16 udelades, da de afhænger af andre felter. */
+/** Formularens startværdier. I5 og I6 udelades, da de afhænger af lånebehovet. */
 export function createDefaultDraft(): InputDraft {
   return {
     monthlyLoanFee: MONTHLY_LOAN_FEE,
@@ -89,10 +83,9 @@ export function createDefaultDraft(): InputDraft {
     ownershipTax: { amount: OWNERSHIP_TAX_AMOUNT, frequency: OWNERSHIP_TAX_FREQUENCY },
     annualKm: ANNUAL_KM,
     leaseTermMonths: LEASE_TERM_MONTHS,
-    earlyExitCost: EARLY_EXIT_COST,
     returnCost: RETURN_COST,
-    investDifference: INVEST_DIFFERENCE,
     annualReturnPct: ANNUAL_RETURN_PCT,
     returnTaxPct: RETURN_TAX_PCT,
+    interestDeductionPct: INTEREST_DEDUCTION_PCT,
   }
 }

@@ -16,7 +16,6 @@ const UDFYLDT: InputDraft = {
   annualKm: 20000,
   leaseInitialPayment: 10000,
   leaseMonthlyPayment: 3000,
-  excessKmPrice: 1,
 }
 
 function errorFields(draft: InputDraft): string[] {
@@ -41,16 +40,6 @@ describe('validering', () => {
     expect(draft.annualKm).toBe(15000)
   })
 
-  it('I16 følger I12, når brugeren ikke selv har valgt', () => {
-    const result = validate({ ...UDFYLDT, annualKm: 25000, includedKmPerYear: undefined })
-    expect(result.ok && result.inputs.includedKmPerYear).toBe(25000)
-  })
-
-  it('I16 kan sættes til en anden værdi end I12', () => {
-    const result = validate({ ...UDFYLDT, annualKm: 25000, includedKmPerYear: 15000 })
-    expect(result.ok && result.inputs.includedKmPerYear).toBe(15000)
-  })
-
   it('egne værdier for I5 og I6 bruges i stedet for standardværdien', () => {
     const result = validate({ ...UDFYLDT, registrationFee: 0, establishmentFee: 1000 })
     expect(result.ok && [result.inputs.registrationFee, result.inputs.establishmentFee]).toEqual([0, 1000])
@@ -64,7 +53,6 @@ describe('validering', () => {
       'insurance',
       'leaseInitialPayment',
       'leaseMonthlyPayment',
-      'excessKmPrice',
     ])
   })
 
@@ -72,7 +60,7 @@ describe('validering', () => {
     expect(errorFields({ ...UDFYLDT, downPayment: 120001 })).toEqual(['downPayment'])
   })
 
-  it('uden lån ignoreres lånefelterne I3-I7, også ugyldige værdier', () => {
+  it('uden lån ignoreres lånefelterne I3-I7 og I23, også ugyldige værdier', () => {
     const result = validate({
       ...UDFYLDT,
       downPayment: 120000,
@@ -81,6 +69,7 @@ describe('validering', () => {
       registrationFee: -1,
       establishmentFee: undefined,
       monthlyLoanFee: undefined,
+      interestDeductionPct: undefined,
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -90,7 +79,8 @@ describe('validering', () => {
       result.inputs.registrationFee,
       result.inputs.establishmentFee,
       result.inputs.monthlyLoanFee,
-    ]).toEqual([0, 0, 0, 0, 0])
+      result.inputs.interestDeductionPct,
+    ]).toEqual([0, 0, 0, 0, 0, 0])
   })
 
   it('med lån er I3 og I4 påkrævede', () => {
@@ -116,8 +106,7 @@ describe('validering', () => {
     ['depreciationPct', { depreciationPct: [20, 14.5, 101, 14.5] }],
     ['leaseTermMonths', { leaseTermMonths: 30 }],
     ['leaseMonthlyPayment', { leaseMonthlyPayment: 0 }],
-    ['includedKmPerYear', { includedKmPerYear: 12500 }],
-    ['includedKmPerYear', { includedKmPerYear: 50000 }],
+    ['interestDeductionPct', { interestDeductionPct: 101 }],
     ['annualKm', { annualKm: 5000 }],
     ['annualKm', { annualKm: 17500 }],
     ['returnTaxPct', { returnTaxPct: 101 }],
@@ -125,8 +114,10 @@ describe('validering', () => {
     expect(errorFields({ ...UDFYLDT, ...change })).toEqual([field])
   })
 
-  it('afkast "fra": I21 og I22 er ikke påkrævede', () => {
-    const result = validate({ ...UDFYLDT, investDifference: false, annualReturnPct: undefined, returnTaxPct: undefined })
-    expect(result.ok).toBe(true)
+  it('afkast regnes altid med: I21 og I22 er påkrævede', () => {
+    expect(errorFields({ ...UDFYLDT, annualReturnPct: undefined, returnTaxPct: undefined })).toEqual([
+      'annualReturnPct',
+      'returnTaxPct',
+    ])
   })
 })
