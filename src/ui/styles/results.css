@@ -386,3 +386,23 @@ details[open] > summary {
   color: var(--muted);
   font-family: var(--body);
 }
+
+/* "Sådan er tallene regnet" foldes ud nederst i resultatboksen. */
+
+.breakdown {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.breakdown > summary {
+  font: 600 0.92rem var(--body);
+  color: var(--muted);
+  width: fit-content;
+  transition: color 0.15s ease;
+}
+
+.breakdown > summary:hover,
+.breakdown[open] > summary {
+  color: var(--text);
+}

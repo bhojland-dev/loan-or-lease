@@ -4,7 +4,6 @@ import { useState } from 'react'
 import type { Result } from '../../core/index.ts'
 import { Amortization } from './Amortization.tsx'
 import { BreakEven } from './BreakEven.tsx'
-import { Breakdown } from './Breakdown.tsx'
 import { Comparison } from './Comparison.tsx'
 import { MonthlyCosts } from './MonthlyCosts.tsx'
 import { Summary } from './Summary.tsx'
@@ -20,7 +19,6 @@ export function Results({ result }: { result: Result }) {
       <MonthlyCosts row={row} />
       <Comparison result={result} />
       <BreakEven result={result} />
-      <Breakdown row={row} />
       <Amortization result={result} />
     </>
   )

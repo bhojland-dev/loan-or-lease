@@ -1,5 +1,6 @@
 import type { ComparisonRow, Result, Side } from '../../core/index.ts'
 import { AnimatedNumber } from '../AnimatedNumber.tsx'
+import { Breakdown } from './Breakdown.tsx'
 import { formatKr, formatMonths } from '../format.ts'
 import { CHEAPEST_LABEL, SIDE_LABEL } from '../labels.ts'
 
@@ -55,6 +56,8 @@ export function Summary({ result, row, onChoose }: SummaryProps) {
 
         <TotalTile side="lease" total={row.lease.total} max={max} winner={row.cheapest === 'lease'} />
       </div>
+
+      <Breakdown row={row} />
     </section>
   )
 }

@@ -27,13 +27,11 @@ const LEASE_ROWS: readonly Row<LeaseBreakdown>[] = [
   { key: 'investmentReturn', label: POST_LABEL.investmentReturn, sign: -1 },
 ]
 
+/** Opdelingen af TCO for det valgte tidspunkt. Foldes ud nederst i resultatboksen. */
 export function Breakdown({ row }: { row: ComparisonRow }) {
   return (
-    <details className="card">
-      <summary>
-        <h2>Sådan er tallene regnet efter {formatMonths(row.months)}</h2>
-      </summary>
-      <p className="section-intro">Skift tidspunkt øverst i resultatet.</p>
+    <details className="breakdown">
+      <summary>Sådan er tallene regnet efter {formatMonths(row.months)}</summary>
       <div className="breakdown-grid">
         <BreakdownTable
           side="buy"
