@@ -12,11 +12,11 @@ Alle forudfyldte felter kan rettes af brugeren. Felter uden standardværdi skal 
 | --- | --- | --- | --- | --- |
 | I1 | Købspris (kr., faktisk pris efter evt. rabat) | Køb | Ingen | > 0 |
 | I2 | Udbetaling (kr.) | Køb | Ingen | 0 ≤ I2 ≤ I1 |
-| I3 | Debitorrente (% p.a.) | Køb | Ingen | ≥ 0. Kun påkrævet ved lån (B1 > 0) |
-| I4 | Lånets løbetid (mdr.) | Køb | Ingen | > 0, uafhængig af I13. Kun påkrævet ved lån (B1 > 0) |
-| I5 | Tinglysningsafgift (kr.) | Køb | 1.850 + 1,5 % af lånebehov, hele beløbet oprundet til nærmeste 100 kr. (fx 4.250 → 4.300) | ≥ 0 |
-| I6 | Stiftelsesprovision (kr.) | Køb | 1,25 % af lånebehov, min. 2.000, maks. 10.000 | ≥ 0 |
-| I7 | Løbende lånegebyr (kr./md.) | Køb | 0 | ≥ 0 |
+| I3 | Debitorrente (% p.a.) | Køb | Ingen | ≥ 0. Kun ved lån |
+| I4 | Lånets løbetid (mdr.) | Køb | Ingen | > 0, uafhængig af I13. Kun ved lån |
+| I5 | Tinglysningsafgift (kr.) | Køb | 1.850 + 1,5 % af lånebehov, hele beløbet oprundet til nærmeste 100 kr. (fx 4.250 → 4.300) | ≥ 0. Kun ved lån |
+| I6 | Stiftelsesprovision (kr.) | Køb | 1,25 % af lånebehov, min. 2.000, maks. 10.000 | ≥ 0. Kun ved lån |
+| I7 | Løbende lånegebyr (kr./md.) | Køb | 0 | ≥ 0. Kun ved lån |
 | I8 | Service (beløb + frekvens) | Køb | Ingen | ≥ 0. Ved leasing altid 0 kr. (inkluderet) |
 | I9 | Afskrivning år 1 / 2 / 3 / 4 (%) | Køb | 20 / 14,5 / 14,5 / 14,5 | 0-100 |
 | I10 | Forsikring (beløb + frekvens) | Begge | Ingen | ≥ 0. Ét fælles felt |
@@ -34,6 +34,8 @@ Alle forudfyldte felter kan rettes af brugeren. Felter uden standardværdi skal 
 | I22 | Skattesats på afkast (%) | Begge | 37 | 0-100. Kun ved I20 = til |
 
 Frekvens for I8, I10 og I11 vælges blandt måned, kvartal, halvår og år.
+
+I3-I7 bruges og valideres kun ved lån (B1 > 0). Er udbetalingen lig købsprisen, er der intet lån, og felterne skjules og ignoreres.
 
 ## 2. Beregning
 
