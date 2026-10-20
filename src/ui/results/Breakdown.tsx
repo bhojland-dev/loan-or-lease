@@ -32,7 +32,7 @@ export function Breakdown({ row }: { row: ComparisonRow }) {
   return (
     <details className="breakdown">
       <summary>Sådan er tallene regnet efter {formatMonths(row.months)}</summary>
-      <div className="breakdown-grid">
+      <div className="three-col breakdown-grid">
         <BreakdownTable
           side="buy"
           rows={BUY_ROWS.map((r) => ({ ...r, value: row.buy[r.key] }))}

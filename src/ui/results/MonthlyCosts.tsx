@@ -18,7 +18,7 @@ export function MonthlyCosts({ row }: { row: ComparisonRow }) {
         Gennemsnit pr. måned de første {formatMonths(row.months)}, uden engangsbeløb som udbetaling, førstegangsydelse
         og restgæld.
       </p>
-      <div className="monthly-grid">
+      <div className="three-col monthly-grid">
         <MonthlyTable side="buy" costs={row.monthly.buy} />
         <MonthlyTable side="lease" costs={row.monthly.lease} />
       </div>

@@ -35,10 +35,9 @@ export function Summary({ result, row, onChoose }: SummaryProps) {
         </div>
       </div>
 
-      <Verdict row={row} />
-
-      <div className="tiles">
+      <div className="three-col">
         <TotalTile side="buy" row={row} max={max} />
+        <Verdict row={row} />
         <TotalTile side="lease" row={row} max={max} />
       </div>
 
@@ -47,28 +46,26 @@ export function Summary({ result, row, onChoose }: SummaryProps) {
   )
 }
 
-/** Dommen øverst i resultatet, så svaret er det første, man ser. */
+/** Dommen mellem de to fliser: hvad der er billigst, og med hvor meget. */
 function Verdict({ row }: { row: ComparisonRow }) {
-  const period = formatMonths(row.months)
   if (row.cheapest === 'equal') {
     return (
-      <p className="verdict" role="status">
-        <span className="verdict-who">
-          {CHEAPEST_LABEL.equal} efter {period}
-        </span>
-      </p>
+      <div className="verdict" role="status">
+        <span className="verdict-who">{CHEAPEST_LABEL.equal}</span>
+      </div>
     )
   }
   return (
-    <p className={`verdict verdict-${row.cheapest}`} role="status">
+    <div className={`verdict verdict-${row.cheapest}`} role="status">
       {/* key får dommen til at poppe ind igen, når vinderen skifter. */}
       <span key={row.cheapest} className="verdict-who">
-        <strong>{CHEAPEST_LABEL[row.cheapest]} er billigst</strong> efter {period}
+        {CHEAPEST_LABEL[row.cheapest]} er billigst
       </span>
       <span className="verdict-amount">
-        <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} /> billigere
+        <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} />
       </span>
-    </p>
+      <span className="verdict-text">i forskel</span>
+    </div>
   )
 }
 

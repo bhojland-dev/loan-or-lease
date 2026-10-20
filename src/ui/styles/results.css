@@ -277,34 +277,29 @@ td.winner-lease {
   color: var(--muted);
 }
 
-/* Dommen: et bånd i fuld bredde over fliserne, med vinderen i sin farve. */
+/* Dommen: en mørk boks mellem de to fliser, med vinderen i sin farve. */
 .verdict {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  margin: 0 0 1rem;
-  padding: 0.85rem 1.1rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 0.9rem 1.1rem;
   border-radius: 12px;
   background: var(--text);
   color: var(--bg);
 }
 
 .verdict-who {
-  font-size: 0.95rem;
+  font: 700 0.95rem var(--display);
   animation: pop 0.35s var(--ease-out);
 }
 
-.verdict-who strong {
-  font: 700 1.1rem var(--display);
-}
-
-.verdict-buy strong {
+.verdict-buy .verdict-who {
   color: color-mix(in srgb, var(--buy) 55%, var(--bg));
 }
 
-.verdict-lease strong {
+.verdict-lease .verdict-who {
   color: color-mix(in srgb, var(--lease) 55%, var(--bg));
 }
 
@@ -313,10 +308,16 @@ td.winner-lease {
   font-variant-numeric: tabular-nums;
 }
 
-/* Fliserne, opdelingen og de månedlige udgifter deler de samme to kolonner, så kanterne flugter. */
+.verdict-text {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--bg) 70%, var(--text));
+}
 
-.tiles,
-.breakdown-grid {
+/* Fliserne, opdelingen og de månedlige udgifter deler de samme tre kolonner: køb, midten og leasing.
+   I fliserne står dommen i midten; i tabellerne er midten tom, så kanterne flugter med fliserne. */
+
+.three-col {
+  --middle: 11rem;
   display: grid;
   gap: 1rem;
 }
@@ -326,9 +327,13 @@ td.winner-lease {
 }
 
 @media (min-width: 860px) {
-  .tiles,
-  .breakdown-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  .three-col {
+    grid-template-columns: minmax(0, 1fr) var(--middle) minmax(0, 1fr);
+  }
+
+  /* I tabellerne er der kun to børn: køb i første og leasing i sidste kolonne. */
+  .three-col > :nth-child(2):last-child {
+    grid-column: 3;
   }
 }
 
@@ -346,17 +351,6 @@ details[open] > summary {
 }
 
 /* Månedlige faste udgifter */
-
-.monthly-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 860px) {
-  .monthly-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
 
 .monthly-buy {
   --accent: var(--buy);
