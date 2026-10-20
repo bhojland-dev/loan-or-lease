@@ -12,7 +12,7 @@ export function BreakEven({ result }: { result: Result }) {
         billigst.
       </p>
       <div className="table-scroll">
-        <table>
+        <table className="even-table">
           <thead>
             <tr>
               <th scope="col">Efter</th>

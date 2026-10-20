@@ -73,7 +73,7 @@ tbody tr:hover {
   background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
 }
 
-.winner {
+td.winner {
   font-weight: 700;
 }
 
@@ -148,11 +148,11 @@ details > summary h2 {
   font-size: 0.88rem;
 }
 
-.winner-buy {
+td.winner-buy {
   color: var(--buy);
 }
 
-.winner-lease {
+td.winner-lease {
   color: var(--lease);
 }
 
@@ -402,70 +402,8 @@ details[open] > summary {
   color: var(--text);
 }
 
-/* Alle tidspunkter: hver række bruger de tre kolonner, så tallene flugter med fliserne og tabellerne. */
-
-.comparison {
-  min-width: 36rem;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.comparison-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--middle) minmax(0, 1fr);
-  gap: var(--col-gap);
-  align-items: center;
-  border-bottom: 1px solid var(--border);
-  transition: background-color 0.15s ease;
-}
-
-.comparison-row:not(.comparison-head):hover {
-  background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
-}
-
-.comparison-head {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-/* Samme indrykning som cellerne i tabellerne, så tekst og beløb står præcis under hinanden. */
-.comparison-side {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.45rem 0.6rem;
-  white-space: nowrap;
-}
-
-.comparison-side:last-child {
-  justify-content: flex-end;
-}
-
-.comparison-row:not(.comparison-head) .comparison-side > [role='cell'] {
-  font-family: var(--mono);
-}
-
-/* Mærket i venstre halvdel og forskellen i højre, så de står i hver sin lige kolonne. */
-.comparison-middle {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  white-space: nowrap;
-}
-
-.comparison-middle > .badge {
-  justify-self: end;
-}
-
-.comparison-head .comparison-middle {
-  display: block;
-  text-align: center;
-  font-family: inherit;
-  font-size: inherit;
+/* Tabeller med lige brede kolonner (Alle tidspunkter, Break-even). Første kolonne står til venstre og
+   sidste til højre med samme indrykning som de øvrige tabeller, så teksten flugter i begge sider. */
+.even-table {
+  table-layout: fixed;
 }
