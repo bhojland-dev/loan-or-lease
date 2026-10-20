@@ -277,51 +277,38 @@ td.winner-lease {
   color: var(--muted);
 }
 
-.verdict {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  text-align: center;
-  gap: 0.15rem;
-  padding: 0.9rem 1.1rem;
-  border-radius: 12px;
-  background: var(--text);
-  color: var(--bg);
-  min-width: 11rem;
-}
-
-.verdict-who {
-  font: 700 0.95rem var(--display);
+/* Mærket med forskellen i den billigste flise. */
+.tile-badge {
+  justify-self: start;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font: 600 0.82rem var(--body);
+  font-variant-numeric: tabular-nums;
+  color: var(--surface);
+  background: var(--accent);
   animation: pop 0.35s var(--ease-out);
 }
 
-.verdict-buy {
-  color: color-mix(in srgb, var(--buy) 55%, var(--bg));
+.tile-badge-equal {
+  color: var(--text);
+  background: var(--border);
 }
 
-.verdict-lease {
-  color: color-mix(in srgb, var(--lease) 55%, var(--bg));
-}
+/* Fliserne, opdelingen og de månedlige udgifter deler de samme to kolonner, så kanterne flugter. */
 
-.verdict-amount {
-  font: 700 1.25rem var(--display);
-  font-variant-numeric: tabular-nums;
-}
-
-.verdict-text {
-  font-size: 0.78rem;
-  color: color-mix(in srgb, var(--bg) 70%, var(--text));
-}
-
-/* Opdelingen af TCO side om side */
-
+.tiles,
 .breakdown-grid {
   display: grid;
   gap: 1rem;
+}
+
+.breakdown-grid {
   margin-top: 0.5rem;
 }
 
 @media (min-width: 860px) {
+  .tiles,
   .breakdown-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }

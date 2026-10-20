@@ -1,8 +1,8 @@
 import type { ComparisonRow, Result, Side } from '../../core/index.ts'
 import { AnimatedNumber } from '../AnimatedNumber.tsx'
-import { Breakdown } from './Breakdown.tsx'
 import { formatKr, formatMonths } from '../format.ts'
 import { CHEAPEST_LABEL, SIDE_LABEL } from '../labels.ts'
+import { Breakdown } from './Breakdown.tsx'
 
 interface SummaryProps {
   result: Result
@@ -35,41 +35,36 @@ export function Summary({ result, row, onChoose }: SummaryProps) {
         </div>
       </div>
 
-      <div className="duel duel-result">
-        <TotalTile side="buy" total={row.buy.total} max={max} winner={row.cheapest === 'buy'} />
-
-        <div className="verdict" role="status">
-          {row.cheapest === 'equal' ? (
-            <span className="verdict-text">{CHEAPEST_LABEL.equal}</span>
-          ) : (
-            <>
-              <span key={row.cheapest} className={`verdict-who verdict-${row.cheapest}`}>
-                {CHEAPEST_LABEL[row.cheapest]} er billigst
-              </span>
-              <span className="verdict-amount">
-                <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} />
-              </span>
-              <span className="verdict-text">i forskel</span>
-            </>
-          )}
-        </div>
-
-        <TotalTile side="lease" total={row.lease.total} max={max} winner={row.cheapest === 'lease'} />
+      <div className="tiles">
+        <TotalTile side="buy" row={row} max={max} />
+        <TotalTile side="lease" row={row} max={max} />
       </div>
+
+      {/* Dommen til skærmlæsere. Visuelt står den som et mærke i den billigste flise. */}
+      <p className="visually-hidden" role="status">
+        {verdictText(row)}
+      </p>
 
       <Breakdown row={row} />
     </section>
   )
 }
 
-interface TotalTileProps {
-  side: Side
-  total: number
-  max: number
-  winner: boolean
+/** "Køb er billigst, 19.794,04 kr. billigere" eller "Lige dyre". */
+function verdictText(row: ComparisonRow): string {
+  if (row.cheapest === 'equal') return CHEAPEST_LABEL.equal
+  return `${CHEAPEST_LABEL[row.cheapest]} er billigst, ${formatKr(Math.abs(row.difference))} billigere`
 }
 
-function TotalTile({ side, total, max, winner }: TotalTileProps) {
+interface TotalTileProps {
+  side: Side
+  row: ComparisonRow
+  max: number
+}
+
+function TotalTile({ side, row, max }: TotalTileProps) {
+  const total = row[side].total
+  const winner = row.cheapest === side
   return (
     <div className={`tile tile-${side}${winner ? ' is-winner' : ''}`}>
       <span className="tile-k">
@@ -83,6 +78,17 @@ function TotalTile({ side, total, max, winner }: TotalTileProps) {
         <span style={{ width: `${Math.max(0, (total / max) * 100)}%` }} />
       </span>
       <span className="tile-s">Samlede omkostninger (TCO)</span>
+      {winner && (
+        // key får mærket til at poppe ind, når vinderen skifter.
+        <span key={row.cheapest} className="tile-badge" aria-hidden="true">
+          Billigst · <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} /> mindre
+        </span>
+      )}
+      {row.cheapest === 'equal' && (
+        <span className="tile-badge tile-badge-equal" aria-hidden="true">
+          {CHEAPEST_LABEL.equal}
+        </span>
+      )}
     </div>
   )
 }
