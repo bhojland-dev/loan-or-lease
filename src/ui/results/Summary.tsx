@@ -35,25 +35,41 @@ export function Summary({ result, row, onChoose }: SummaryProps) {
         </div>
       </div>
 
+      <Verdict row={row} />
+
       <div className="tiles">
         <TotalTile side="buy" row={row} max={max} />
         <TotalTile side="lease" row={row} max={max} />
       </div>
-
-      {/* Dommen til skærmlæsere. Visuelt står den som et mærke i den billigste flise. */}
-      <p className="visually-hidden" role="status">
-        {verdictText(row)}
-      </p>
 
       <Breakdown row={row} />
     </section>
   )
 }
 
-/** "Køb er billigst, 19.794,04 kr. billigere" eller "Lige dyre". */
-function verdictText(row: ComparisonRow): string {
-  if (row.cheapest === 'equal') return CHEAPEST_LABEL.equal
-  return `${CHEAPEST_LABEL[row.cheapest]} er billigst, ${formatKr(Math.abs(row.difference))} billigere`
+/** Dommen øverst i resultatet, så svaret er det første, man ser. */
+function Verdict({ row }: { row: ComparisonRow }) {
+  const period = formatMonths(row.months)
+  if (row.cheapest === 'equal') {
+    return (
+      <p className="verdict" role="status">
+        <span className="verdict-who">
+          {CHEAPEST_LABEL.equal} efter {period}
+        </span>
+      </p>
+    )
+  }
+  return (
+    <p className={`verdict verdict-${row.cheapest}`} role="status">
+      {/* key får dommen til at poppe ind igen, når vinderen skifter. */}
+      <span key={row.cheapest} className="verdict-who">
+        <strong>{CHEAPEST_LABEL[row.cheapest]} er billigst</strong> efter {period}
+      </span>
+      <span className="verdict-amount">
+        <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} /> billigere
+      </span>
+    </p>
+  )
 }
 
 interface TotalTileProps {
@@ -78,17 +94,6 @@ function TotalTile({ side, row, max }: TotalTileProps) {
         <span style={{ width: `${Math.max(0, (total / max) * 100)}%` }} />
       </span>
       <span className="tile-s">Samlede omkostninger (TCO)</span>
-      {winner && (
-        // key får mærket til at poppe ind, når vinderen skifter.
-        <span key={row.cheapest} className="tile-badge" aria-hidden="true">
-          Billigst · <AnimatedNumber value={Math.abs(row.difference)} format={formatKr} /> mindre
-        </span>
-      )}
-      {row.cheapest === 'equal' && (
-        <span className="tile-badge tile-badge-equal" aria-hidden="true">
-          {CHEAPEST_LABEL.equal}
-        </span>
-      )}
     </div>
   )
 }

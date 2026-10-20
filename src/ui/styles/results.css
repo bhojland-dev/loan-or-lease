@@ -277,22 +277,40 @@ td.winner-lease {
   color: var(--muted);
 }
 
-/* Mærket med forskellen i den billigste flise. */
-.tile-badge {
-  justify-self: start;
-  margin-top: 0.35rem;
-  padding: 0.2rem 0.7rem;
-  border-radius: 999px;
-  font: 600 0.82rem var(--body);
-  font-variant-numeric: tabular-nums;
-  color: var(--surface);
-  background: var(--accent);
+/* Dommen: et bånd i fuld bredde over fliserne, med vinderen i sin farve. */
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+}
+
+.verdict-who {
+  font-size: 0.95rem;
   animation: pop 0.35s var(--ease-out);
 }
 
-.tile-badge-equal {
-  color: var(--text);
-  background: var(--border);
+.verdict-who strong {
+  font: 700 1.1rem var(--display);
+}
+
+.verdict-buy strong {
+  color: color-mix(in srgb, var(--buy) 55%, var(--bg));
+}
+
+.verdict-lease strong {
+  color: color-mix(in srgb, var(--lease) 55%, var(--bg));
+}
+
+.verdict-amount {
+  font: 700 1.25rem var(--display);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Fliserne, opdelingen og de månedlige udgifter deler de samme to kolonner, så kanterne flugter. */
