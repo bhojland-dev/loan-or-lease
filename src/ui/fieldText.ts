@@ -2,7 +2,7 @@
 
 import type { NumberField, PeriodicField } from '../core/index.ts'
 
-export interface FieldText {
+interface FieldText {
   label: string
   unit: string
   hint?: string

@@ -54,10 +54,6 @@
   background: var(--accent);
 }
 
-.card-lease {
-  animation-delay: 80ms;
-}
-
 .side-head {
   margin-bottom: 1rem;
 }

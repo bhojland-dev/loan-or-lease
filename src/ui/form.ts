@@ -16,7 +16,7 @@ export interface FormState {
   depreciation: [string, string, string, string]
 }
 
-export const PERIODIC_FIELDS: readonly PeriodicField[] = ['service', 'insurance', 'ownershipTax']
+const PERIODIC_FIELDS: readonly PeriodicField[] = ['service', 'insurance', 'ownershipTax']
 
 export function initialFormState(): FormState {
   const draft = createDefaultDraft()
